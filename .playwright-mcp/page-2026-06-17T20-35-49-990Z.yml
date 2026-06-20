@@ -1,0 +1,94 @@
+- generic [ref=e3]:
+  - complementary [ref=e4]:
+    - generic [ref=e6]:
+      - img [ref=e8]
+      - generic [ref=e10]: HARSTEL
+    - navigation [ref=e11]:
+      - link "Dashboard" [ref=e12] [cursor=pointer]:
+        - /url: /
+        - img [ref=e13]
+        - generic [ref=e18]: Dashboard
+      - link "Cari Kendaraan" [ref=e19] [cursor=pointer]:
+        - /url: /vehicle-lookup
+        - img [ref=e20]
+        - generic [ref=e23]: Cari Kendaraan
+      - link "Pelanggan" [active] [ref=e24] [cursor=pointer]:
+        - /url: /customers
+        - img [ref=e25]
+        - generic [ref=e30]: Pelanggan
+      - link "Kendaraan" [ref=e31] [cursor=pointer]:
+        - /url: /vehicles
+        - img [ref=e32]
+        - generic [ref=e36]: Kendaraan
+      - link "Work Order" [ref=e37] [cursor=pointer]:
+        - /url: /work-orders
+        - img [ref=e38]
+        - generic [ref=e40]: Work Order
+      - link "Sparepart" [ref=e41] [cursor=pointer]:
+        - /url: /spareparts
+        - img [ref=e42]
+        - generic [ref=e46]: Sparepart
+      - link "Inventori" [ref=e47] [cursor=pointer]:
+        - /url: /inventory
+        - img [ref=e48]
+        - generic [ref=e51]: Inventori
+      - link "Mekanik" [ref=e52] [cursor=pointer]:
+        - /url: /mechanics
+        - img [ref=e53]
+        - generic [ref=e65]: Mekanik
+      - link "Kasir / POS" [ref=e66] [cursor=pointer]:
+        - /url: /pos
+        - img [ref=e67]
+        - generic [ref=e70]: Kasir / POS
+      - link "Booking" [ref=e71] [cursor=pointer]:
+        - /url: /bookings
+        - img [ref=e72]
+        - generic [ref=e74]: Booking
+      - link "Laporan" [ref=e75] [cursor=pointer]:
+        - /url: /reports
+        - img [ref=e76]
+        - generic [ref=e78]: Laporan
+    - generic [ref=e79]:
+      - button "Keluar" [ref=e80] [cursor=pointer]:
+        - img [ref=e81]
+        - generic [ref=e84]: Keluar
+      - button "Tutup Sidebar" [ref=e85] [cursor=pointer]:
+        - img [ref=e86]
+        - generic [ref=e88]: Tutup Sidebar
+  - generic [ref=e89]:
+    - banner [ref=e90]:
+      - generic [ref=e93]:
+        - img
+        - textbox "Cari no. rangka / mesin / plat / pelanggan / WO..." [ref=e94]
+      - generic [ref=e95]:
+        - button [ref=e97] [cursor=pointer]:
+          - img [ref=e98]
+        - generic [ref=e101]:
+          - generic [ref=e103]: U
+          - generic [ref=e104]:
+            - paragraph [ref=e105]: User
+            - paragraph [ref=e106]: admin
+    - main [ref=e107]:
+      - generic [ref=e177]:
+        - generic [ref=e178]:
+          - generic [ref=e179]:
+            - heading "Pelanggan" [level=1] [ref=e180]
+            - paragraph [ref=e181]: 0 total pelanggan
+          - button "Tambah Pelanggan" [ref=e183] [cursor=pointer]:
+            - img
+            - text: Tambah Pelanggan
+        - generic [ref=e185]:
+          - img [ref=e186]
+          - textbox "Cari pelanggan..." [ref=e189]
+        - table [ref=e192]:
+          - rowgroup [ref=e193]:
+            - row "Pelanggan Telepon Alamat Kunjungan Total Pengeluaran Bergabung" [ref=e194]:
+              - columnheader "Pelanggan" [ref=e195]
+              - columnheader "Telepon" [ref=e196]
+              - columnheader "Alamat" [ref=e197]
+              - columnheader "Kunjungan" [ref=e198]
+              - columnheader "Total Pengeluaran" [ref=e199]
+              - columnheader "Bergabung" [ref=e200]
+          - rowgroup [ref=e201]:
+            - row "Tidak ada data" [ref=e202]:
+              - cell "Tidak ada data" [ref=e203]

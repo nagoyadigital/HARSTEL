@@ -1,0 +1,125 @@
+- generic [ref=e3]:
+  - complementary [ref=e4]:
+    - generic [ref=e6]:
+      - img [ref=e8]
+      - generic [ref=e10]: HARSTEL
+    - navigation [ref=e11]:
+      - link "Dashboard" [ref=e12] [cursor=pointer]:
+        - /url: /
+        - img [ref=e13]
+        - generic [ref=e18]: Dashboard
+      - link "Cari Kendaraan" [ref=e19] [cursor=pointer]:
+        - /url: /vehicle-lookup
+        - img [ref=e20]
+        - generic [ref=e23]: Cari Kendaraan
+      - link "Pelanggan" [ref=e24] [cursor=pointer]:
+        - /url: /customers
+        - img [ref=e25]
+        - generic [ref=e30]: Pelanggan
+      - link "Kendaraan" [ref=e31] [cursor=pointer]:
+        - /url: /vehicles
+        - img [ref=e32]
+        - generic [ref=e36]: Kendaraan
+      - link "Work Order" [ref=e37] [cursor=pointer]:
+        - /url: /work-orders
+        - img [ref=e38]
+        - generic [ref=e40]: Work Order
+      - link "Sparepart" [ref=e41] [cursor=pointer]:
+        - /url: /spareparts
+        - img [ref=e42]
+        - generic [ref=e46]: Sparepart
+      - link "Inventori" [ref=e47] [cursor=pointer]:
+        - /url: /inventory
+        - img [ref=e48]
+        - generic [ref=e51]: Inventori
+      - link "Mekanik" [ref=e52] [cursor=pointer]:
+        - /url: /mechanics
+        - img [ref=e53]
+        - generic [ref=e65]: Mekanik
+      - link "Kasir / POS" [ref=e66] [cursor=pointer]:
+        - /url: /pos
+        - img [ref=e67]
+        - generic [ref=e70]: Kasir / POS
+      - link "Booking" [ref=e71] [cursor=pointer]:
+        - /url: /bookings
+        - img [ref=e72]
+        - generic [ref=e74]: Booking
+      - link "Laporan" [ref=e75] [cursor=pointer]:
+        - /url: /reports
+        - img [ref=e76]
+        - generic [ref=e78]: Laporan
+    - generic [ref=e79]:
+      - button "Keluar" [ref=e80] [cursor=pointer]:
+        - img [ref=e81]
+        - generic [ref=e84]: Keluar
+      - button "Tutup Sidebar" [ref=e85] [cursor=pointer]:
+        - img [ref=e86]
+        - generic [ref=e88]: Tutup Sidebar
+  - generic [ref=e89]:
+    - banner [ref=e90]:
+      - generic [ref=e93]:
+        - img
+        - textbox "Cari no. rangka / mesin / plat / pelanggan / WO..." [ref=e94]
+      - generic [ref=e95]:
+        - button [ref=e97] [cursor=pointer]:
+          - img [ref=e98]
+        - generic [ref=e101]:
+          - generic [ref=e103]: U
+          - generic [ref=e104]:
+            - paragraph [ref=e105]: User
+            - paragraph [ref=e106]: admin
+    - main [ref=e107]:
+      - generic [ref=e108]:
+        - generic [ref=e109]:
+          - heading "HARSTEL WORKSHOP" [level=1] [ref=e110]
+          - paragraph [ref=e111]: Ringkasan operasional hari ini
+        - generic [ref=e113]:
+          - img
+          - textbox "Cari pelanggan, kendaraan, nomor polisi, nomor WO, nomor telepon..." [ref=e114]
+        - generic [ref=e115]:
+          - generic [ref=e117]:
+            - generic [ref=e118]:
+              - paragraph [ref=e119]: Mobil Sedang Diservis
+              - paragraph [ref=e120]: "0"
+              - paragraph [ref=e121]: 0 mobil menunggu antrian
+            - img [ref=e123]
+          - generic [ref=e128]:
+            - generic [ref=e129]:
+              - paragraph [ref=e130]: Pendapatan Hari Ini
+              - paragraph [ref=e131]: ¥ 0
+              - paragraph [ref=e132]: 0 kendaraan selesai
+            - img [ref=e134]
+          - generic [ref=e137]:
+            - generic [ref=e138]:
+              - paragraph [ref=e139]: Tugas Mekanik Tertunda
+              - paragraph [ref=e140]: "0"
+              - paragraph [ref=e141]: 0 mekanik menunggu
+            - img [ref=e143]
+        - generic [ref=e145]:
+          - generic [ref=e146]:
+            - paragraph [ref=e147]: WO Aktif
+            - paragraph [ref=e148]: "0"
+          - generic [ref=e149]:
+            - paragraph [ref=e150]: Mekanik Aktif
+            - paragraph [ref=e151]: "0"
+          - generic [ref=e152]:
+            - paragraph [ref=e153]: Selesai Hari Ini
+            - paragraph [ref=e154]: "0"
+          - generic [ref=e155]:
+            - paragraph [ref=e156]: Menunggu
+            - paragraph [ref=e157]: "0"
+        - generic [ref=e158]:
+          - generic [ref=e159]:
+            - heading "Status Work Order Aktif" [level=3] [ref=e160]
+            - generic [ref=e161]: Tidak ada WO aktif
+          - generic [ref=e162]:
+            - generic [ref=e163]:
+              - heading "Tugas Mekanik Tertunda" [level=3] [ref=e164]
+              - link "Lihat semua" [ref=e165] [cursor=pointer]:
+                - /url: /work-orders
+                - text: Lihat semua
+                - img [ref=e166]
+            - generic [ref=e168]:
+              - img [ref=e170]
+              - paragraph [ref=e173]: Tidak ada tugas tertunda
+              - paragraph [ref=e174]: Semua mekanik clear!
