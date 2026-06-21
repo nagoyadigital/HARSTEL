@@ -60,7 +60,7 @@ export default function Vehicles() {
         shakeng_status: computeShakeng(data.shakeng_expiry),
       });
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['vehicles'] }); resetForm(); toast.success('車両が追加されました'); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['vehicles'] }); resetForm(); toast.success('Kendaraan berhasil ditambahkan'); },
   });
 
   const updateMutation = useMutation({
@@ -74,7 +74,7 @@ export default function Vehicles() {
         shakeng_status: computeShakeng(data.shakeng_expiry),
       });
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['vehicles'] }); resetForm(); toast.success('車両情報が更新されました'); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['vehicles'] }); resetForm(); toast.success('Kendaraan berhasil diperbarui'); },
   });
 
   const resetForm = () => { setFormData(emptyForm); setEditId(null); setShowForm(false); };
@@ -93,7 +93,7 @@ export default function Vehicles() {
 
   const handleSubmit = () => {
     if (!formData.plate_number || !formData.brand || !formData.model || !formData.customer_id) {
-      toast.error('顧客、ナンバー、メーカー、車種は必須です');
+      toast.error('Pemilik, Nomor Polisi, Merk, dan Model wajib diisi');
       return;
     }
     if (editId) updateMutation.mutate({ id: editId, data: formData });
@@ -113,7 +113,7 @@ export default function Vehicles() {
 
   const columns = [
     {
-      header: '車両',
+      header: 'Kendaraan',
       render: (row) => (
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -126,12 +126,12 @@ export default function Vehicles() {
         </div>
       ),
     },
-    { header: '色', key: 'color' },
-    { header: '所有者', key: 'customer_name' },
-    { header: '区分', render: (row) => <span className="text-xs">{row.vehicle_category || '-'}</span> },
-    { header: '車検', render: (row) => <ShakengBadge status={row.shakeng_status || computeShakeng(row.shakeng_expiry)} /> },
-    { header: '燃料', render: (row) => row.fuel_type ? <span className="flex items-center gap-1.5 text-xs"><Fuel className="w-3.5 h-3.5 text-muted-foreground" />{row.fuel_type}</span> : '-' },
-    { header: '走行距離', render: (row) => row.last_odometer ? <span className="flex items-center gap-1.5 text-xs"><Gauge className="w-3.5 h-3.5 text-muted-foreground" />{row.last_odometer?.toLocaleString()} km</span> : '-' },
+    { header: 'Warna', key: 'color' },
+    { header: 'Pemilik', key: 'customer_name' },
+    { header: 'Kategori', render: (row) => <span className="text-xs">{row.vehicle_category || '-'}</span> },
+    { header: 'Shaken', render: (row) => <ShakengBadge status={row.shakeng_status || computeShakeng(row.shakeng_expiry)} /> },
+    { header: 'BBM', render: (row) => row.fuel_type ? <span className="flex items-center gap-1.5 text-xs"><Fuel className="w-3.5 h-3.5 text-muted-foreground" />{row.fuel_type}</span> : '-' },
+    { header: 'Odometer', render: (row) => row.last_odometer ? <span className="flex items-center gap-1.5 text-xs"><Gauge className="w-3.5 h-3.5 text-muted-foreground" />{row.last_odometer?.toLocaleString()} km</span> : '-' },
   ];
 
   const set = (field, value) => setFormData(prev => ({ ...prev, [field]: value }));
@@ -139,94 +139,94 @@ export default function Vehicles() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="車両管理" description={`${vehicles.length} 台の車両`}
-        actions={<Button onClick={() => setShowForm(true)} className="gap-2"><Plus className="w-4 h-4" />車両追加</Button>}
+      <PageHeader title="Kendaraan" description={`${vehicles.length} kendaraan terdaftar`}
+        actions={<Button onClick={() => setShowForm(true)} className="gap-2"><Plus className="w-4 h-4" />Tambah Kendaraan</Button>}
       />
       <div className="flex items-center gap-3">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input placeholder="ナンバー・メーカー・顧客名で検索..." className="pl-10" value={search} onChange={(e) => setSearch(e.target.value)} />
+          <Input placeholder="Cari nomor polisi, merk, pelanggan..." className="pl-10" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
       </div>
       <DataTable columns={columns} data={filtered} isLoading={isLoading} onRowClick={handleEdit} />
 
       <Dialog open={showForm} onOpenChange={(open) => { if (!open) resetForm(); }}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>{editId ? '車両情報の編集' : '新規車両登録'}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editId ? 'Edit Kendaraan' : 'Tambah Kendaraan Baru'}</DialogTitle></DialogHeader>
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
-              <Label>所有者 (顧客) *</Label>
+              <Label>Pemilik *</Label>
               <Select value={formData.customer_id} onValueChange={(v) => set('customer_id', v)}>
-                <SelectTrigger><SelectValue placeholder="顧客を選択" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Pilih pelanggan" /></SelectTrigger>
                 <SelectContent>{customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="col-span-2">
-              <Label>ナンバープレート *</Label>
+              <Label>Nomor Polisi Jepang *</Label>
               <Input value={formData.plate_number} onChange={(e) => set('plate_number', e.target.value)} placeholder="名古屋 500 あ 1234" />
-              <p className="text-[10px] text-muted-foreground mt-1">例: 名古屋 500 あ 1234</p>
+              <p className="text-[10px] text-muted-foreground mt-1">Contoh: 名古屋 500 あ 1234</p>
             </div>
             <div>
-              <Label>メーカー *</Label>
+              <Label>Merk *</Label>
               <Select value={formData.brand} onValueChange={(v) => { set('brand', v); set('model', ''); }}>
-                <SelectTrigger><SelectValue placeholder="メーカー選択" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Pilih merk" /></SelectTrigger>
                 <SelectContent className="max-h-[300px]">
                   {allBrands.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label>車種 *</Label>
+              <Label>Model *</Label>
               <Select value={formData.model} onValueChange={(v) => set('model', v)} disabled={!formData.brand}>
-                <SelectTrigger><SelectValue placeholder={formData.brand ? '車種選択' : 'メーカーを先に選択'} /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={formData.brand ? 'Pilih model' : 'Pilih merk dulu'} /></SelectTrigger>
                 <SelectContent className="max-h-[300px]">
                   {modelsForBrand.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
-                  <SelectItem value="__other">その他 (手動入力)</SelectItem>
+                  <SelectItem value="__other">Lainnya (ketik manual)</SelectItem>
                 </SelectContent>
               </Select>
               {formData.model === '__other' && (
-                <Input className="mt-2" placeholder="車種名を入力" onChange={(e) => set('model', e.target.value)} />
+                <Input className="mt-2" placeholder="Ketik nama model" onChange={(e) => set('model', e.target.value)} />
               )}
             </div>
-            <div><Label>年式</Label><Input type="number" value={formData.year} onChange={(e) => set('year', e.target.value)} placeholder="2024" /></div>
-            <div><Label>色</Label><Input value={formData.color} onChange={(e) => set('color', e.target.value)} placeholder="白 / ホワイトパール" /></div>
+            <div><Label>Tahun</Label><Input type="number" value={formData.year} onChange={(e) => set('year', e.target.value)} placeholder="2024" /></div>
+            <div><Label>Warna</Label><Input value={formData.color} onChange={(e) => set('color', e.target.value)} placeholder="白 / ホワイトパール" /></div>
             <div>
-              <Label>車両区分</Label>
+              <Label>Kategori Kendaraan</Label>
               <Select value={formData.vehicle_category} onValueChange={(v) => set('vehicle_category', v)}>
-                <SelectTrigger><SelectValue placeholder="区分を選択" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Pilih kategori" /></SelectTrigger>
                 <SelectContent>
                   {VEHICLE_CATEGORIES.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label>燃料</Label>
+              <Label>BBM</Label>
               <Select value={formData.fuel_type} onValueChange={(v) => set('fuel_type', v)}>
-                <SelectTrigger><SelectValue placeholder="燃料選択" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Pilih BBM" /></SelectTrigger>
                 <SelectContent>
                   {FUEL_TYPES.map(f => <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label>ミッション</Label>
+              <Label>Transmisi</Label>
               <Select value={formData.transmission} onValueChange={(v) => set('transmission', v)}>
-                <SelectTrigger><SelectValue placeholder="選択" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Pilih" /></SelectTrigger>
                 <SelectContent>
                   {TRANSMISSION_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
-            <div><Label>走行距離 (km)</Label><Input type="number" value={formData.last_odometer} onChange={(e) => set('last_odometer', e.target.value)} placeholder="50000" /></div>
-            <div><Label>車台番号</Label><Input value={formData.chassis_number} onChange={(e) => set('chassis_number', e.target.value)} placeholder="ZVW30-1234567" /></div>
-            <div><Label>エンジン型式</Label><Input value={formData.engine_number} onChange={(e) => set('engine_number', e.target.value)} placeholder="2ZR-FXE" /></div>
-            <div className="col-span-2 border-t border-border pt-3"><Label className="text-primary font-semibold mb-2 block">車検 (Shaken)</Label></div>
-            <div><Label>車検日</Label><Input type="date" value={formData.shakeng_date} onChange={(e) => set('shakeng_date', e.target.value)} /></div>
-            <div><Label>有効期限</Label><Input type="date" value={formData.shakeng_expiry} onChange={(e) => set('shakeng_expiry', e.target.value)} /></div>
+            <div><Label>Odometer (km)</Label><Input type="number" value={formData.last_odometer} onChange={(e) => set('last_odometer', e.target.value)} placeholder="50000" /></div>
+            <div><Label>Nomor Rangka</Label><Input value={formData.chassis_number} onChange={(e) => set('chassis_number', e.target.value)} placeholder="ZVW30-1234567" /></div>
+            <div><Label>Nomor Mesin</Label><Input value={formData.engine_number} onChange={(e) => set('engine_number', e.target.value)} placeholder="2ZR-FXE" /></div>
+            <div className="col-span-2 border-t border-border pt-3"><Label className="text-primary font-semibold mb-2 block">Shaken (車検)</Label></div>
+            <div><Label>Tgl Shaken</Label><Input type="date" value={formData.shakeng_date} onChange={(e) => set('shakeng_date', e.target.value)} /></div>
+            <div><Label>Tgl Kadaluarsa</Label><Input type="date" value={formData.shakeng_expiry} onChange={(e) => set('shakeng_expiry', e.target.value)} /></div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={resetForm}>キャンセル</Button>
-            <Button onClick={handleSubmit} disabled={createMutation.isPending || updateMutation.isPending}>{editId ? '保存' : '登録'}</Button>
+            <Button variant="outline" onClick={resetForm}>Batal</Button>
+            <Button onClick={handleSubmit} disabled={createMutation.isPending || updateMutation.isPending}>{editId ? 'Simpan' : 'Tambah'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

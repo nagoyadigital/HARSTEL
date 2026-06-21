@@ -43,13 +43,13 @@ export default function Invoice() {
 
   const columns = [
     { header: 'No. WO', render: (row) => <span className="font-mono font-semibold text-primary text-xs">{row.wo_number || `WO-${row.id?.slice(-6)}`}</span> },
-    { header: '顧客', render: (row) => <div><p className="font-medium text-sm">{row.customer_name}</p><p className="text-xs text-muted-foreground">{row.vehicle_info}</p></div> },
-    { header: 'ステータス', render: (row) => <StatusBadge status={row.status} /> },
-    { header: '合計', render: (row) => <span className="font-bold">¥ {(row.total_cost || 0).toLocaleString('ja-JP')}</span> },
-    { header: '日付', render: (row) => formatDateJP(row.created_date) },
-    { header: '操作', render: (row) => (
+    { header: 'Pelanggan', render: (row) => <div><p className="font-medium text-sm">{row.customer_name}</p><p className="text-xs text-muted-foreground">{row.vehicle_info}</p></div> },
+    { header: 'Status', render: (row) => <StatusBadge status={row.status} /> },
+    { header: 'Total', render: (row) => <span className="font-bold">¥ {(row.total_cost || 0).toLocaleString('ja-JP')}</span> },
+    { header: 'Tanggal', render: (row) => formatDateJP(row.created_date) },
+    { header: 'Aksi', render: (row) => (
       <Button size="sm" variant="outline" className="gap-1.5 text-xs" onClick={(e) => { e.stopPropagation(); setSelectedWO(row); }}>
-        <Eye className="w-3.5 h-3.5" /> 請求書
+        <Eye className="w-3.5 h-3.5" /> Invoice
       </Button>
     )},
   ];
@@ -57,11 +57,11 @@ export default function Invoice() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="請求書 (Invoice)"
-        description="Work Orderから請求書を発行・印刷"
+        title="Invoice (請求書)"
+        description="Buat dan cetak invoice dari Work Order"
         actions={
           <Button variant="outline" onClick={() => setShowSettings(true)} className="gap-2">
-            <Settings className="w-4 h-4" />設定
+            <Settings className="w-4 h-4" />Pengaturan
           </Button>
         }
       />
@@ -69,14 +69,14 @@ export default function Invoice() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input placeholder="WO番号・顧客名・車両で検索..." className="pl-10" value={search} onChange={(e) => setSearch(e.target.value)} />
+          <Input placeholder="Cari WO, pelanggan, kendaraan..." className="pl-10" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
         <Select value={filter} onValueChange={setFilter}>
           <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">すべて</SelectItem>
-            <SelectItem value="completed">完了済み</SelectItem>
-            <SelectItem value="active">作業中</SelectItem>
+            <SelectItem value="all">Semua</SelectItem>
+            <SelectItem value="completed">Selesai</SelectItem>
+            <SelectItem value="active">Aktif</SelectItem>
           </SelectContent>
         </Select>
       </div>

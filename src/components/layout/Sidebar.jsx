@@ -19,7 +19,7 @@ const menuItems = [
   { icon: UserCog, label: 'Mekanik', path: '/mechanics' },
   { icon: ShieldCheck, label: 'Shaken (車検)', path: '/shaken' },
   { icon: Receipt, label: 'Kasir / POS', path: '/pos' },
-  { icon: FileText, label: '請求書 (Invoice)', path: '/invoice' },
+  { icon: FileText, label: 'Invoice (請求書)', path: '/invoice' },
   { icon: Calendar, label: 'Booking', path: '/bookings' },
   { icon: BarChart3, label: 'Laporan', path: '/reports' },
   { icon: Database, label: 'Master Data', path: '/master-data' },
