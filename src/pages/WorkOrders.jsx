@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Search, Filter, Eye } from 'lucide-react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Plus, Search, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -40,6 +40,12 @@ export default function WorkOrders() {
     { header: 'Keluhan', render: (row) => <p className="text-sm text-muted-foreground max-w-[200px] truncate">{row.complaint}</p> },
     { header: 'Mekanik', key: 'mechanic_name' },
     { header: 'Status', render: (row) => <StatusBadge status={row.status} /> },
+    { header: 'Pembayaran', render: (row) => {
+      if (row.payment_status === 'Lunas') return <span className="text-xs font-semibold text-emerald-600 flex items-center gap-1">🟢 Lunas</span>;
+      if (row.status === 'Menunggu Pembayaran') return <span className="text-xs font-semibold text-amber-600 flex items-center gap-1">🟡 Menunggu</span>;
+      if (['Selesai', 'Sudah Diambil'].includes(row.status) && !row.payment_status) return <span className="text-xs font-semibold text-amber-600 flex items-center gap-1">🟡 Menunggu</span>;
+      return <span className="text-xs text-muted-foreground">🔴 Belum</span>;
+    }},
     { header: 'Total', render: (row) => <span className="font-semibold">¥ {(row.total_cost || 0).toLocaleString('ja-JP')}</span> },
     { header: 'Tanggal', render: (row) => row.created_date ? format(new Date(row.created_date), 'yyyy/MM/dd') : '-' },
   ];

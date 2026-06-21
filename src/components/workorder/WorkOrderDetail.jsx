@@ -13,9 +13,10 @@ import StatusBadge from '@/components/shared/StatusBadge';
 import InspectionForm from './InspectionForm';
 import { Trash2, Wrench, Package, ShieldAlert } from 'lucide-react';
 import { toast } from 'sonner';
+import { format } from 'date-fns';
 import { getShakenStatus, formatDaysRemaining } from '@/lib/shaken-utils';
 
-const STATUSES = ['Menunggu', 'Inspeksi', 'Estimasi', 'Menunggu Approval', 'Sedang Dikerjakan', 'Menunggu Sparepart', 'Quality Check', 'Selesai', 'Sudah Diambil'];
+const STATUSES = ['Menunggu', 'Inspeksi', 'Estimasi', 'Menunggu Approval', 'Sedang Dikerjakan', 'Menunggu Sparepart', 'Quality Check', 'Selesai', 'Menunggu Pembayaran', 'Sudah Diambil'];
 
 export default function WorkOrderDetail({ workOrder, open, onClose, onUpdate }) {
   const [status, setStatus] = useState(workOrder.status);
@@ -174,9 +175,40 @@ export default function WorkOrderDetail({ workOrder, open, onClose, onUpdate }) 
           </TabsContent>
         </Tabs>
 
-        <div className="flex justify-end gap-2 mt-4">
-          <Button variant="outline" onClick={onClose}>Tutup</Button>
-          <Button onClick={handleSave} disabled={updateMutation.isPending}>Simpan Perubahan</Button>
+        <div className="flex justify-between items-center gap-2 mt-4">
+          <div className="flex gap-2">
+            {/* Invoice & Payment actions - only show when WO has items */}
+            {items.length > 0 && ['Selesai', 'Quality Check', 'Sedang Dikerjakan'].includes(status) && !workOrder.payment_status && (
+              <>
+                <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => {
+                  handleSave();
+                  // Set status to Menunggu Pembayaran and update
+                  updateMutation.mutate({
+                    status: 'Menunggu Pembayaran',
+                    diagnosis,
+                    technician_notes: notes,
+                    items,
+                    inspection,
+                    service_cost: serviceCost,
+                    parts_cost: partsCost,
+                    tax,
+                    total_cost: totalCost,
+                    invoice_number: workOrder.invoice_number || `INV-${format(new Date(), 'yyyyMMdd')}-${workOrder.id?.slice(-4) || '0001'}`,
+                  });
+                  toast.success('Invoice dibuat & dikirim ke Kasir');
+                }}>
+                  Buat Invoice & Kirim ke Kasir
+                </Button>
+              </>
+            )}
+            {workOrder.payment_status === 'Lunas' && (
+              <span className="text-xs font-semibold text-emerald-600 flex items-center gap-1 px-2">🟢 Lunas</span>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={onClose}>Tutup</Button>
+            <Button onClick={handleSave} disabled={updateMutation.isPending}>Simpan Perubahan</Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
