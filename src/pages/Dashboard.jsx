@@ -199,6 +199,62 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* Shaken (車検) Monitoring Widget */}
+      {(() => {
+        const now = new Date();
+        const allVehiclesWithShaken = vehicles.filter(v => v.shakeng_expiry);
+        if (allVehiclesWithShaken.length === 0) return null;
+
+        const expiredVehicles = allVehiclesWithShaken.filter(v => {
+          const diff = Math.ceil((new Date(v.shakeng_expiry) - now) / 86400000);
+          return diff < 0;
+        });
+        const under30 = allVehiclesWithShaken.filter(v => {
+          const diff = Math.ceil((new Date(v.shakeng_expiry) - now) / 86400000);
+          return diff >= 0 && diff <= 30;
+        });
+        const under90 = allVehiclesWithShaken.filter(v => {
+          const diff = Math.ceil((new Date(v.shakeng_expiry) - now) / 86400000);
+          return diff > 30 && diff <= 90;
+        });
+        const safe = allVehiclesWithShaken.filter(v => {
+          const diff = Math.ceil((new Date(v.shakeng_expiry) - now) / 86400000);
+          return diff > 90;
+        });
+
+        return (
+          <div className="bg-card rounded-xl border border-border p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <ShieldAlert className="w-5 h-5 text-primary" />
+                <h3 className="text-sm font-semibold">Monitoring Shaken (車検)</h3>
+              </div>
+              <Link to="/shaken" className="text-xs text-primary hover:underline flex items-center gap-1">
+                Kelola <ArrowRight className="w-3 h-3" />
+              </Link>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-4 text-center">
+                <p className="text-2xl font-bold text-red-500">{expiredVehicles.length}</p>
+                <p className="text-xs text-red-400 mt-1 font-medium">Expired</p>
+              </div>
+              <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 text-center">
+                <p className="text-2xl font-bold text-amber-500">{under30.length}</p>
+                <p className="text-xs text-amber-400 mt-1 font-medium">&lt; 30 Hari</p>
+              </div>
+              <div className="rounded-xl border border-amber-400/15 bg-amber-400/5 p-4 text-center">
+                <p className="text-2xl font-bold text-amber-400">{under90.length}</p>
+                <p className="text-xs text-amber-300 mt-1 font-medium">&lt; 90 Hari</p>
+              </div>
+              <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4 text-center">
+                <p className="text-2xl font-bold text-emerald-500">{safe.length}</p>
+                <p className="text-xs text-emerald-400 mt-1 font-medium">Aman</p>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Shaken (車検) Alerts - Enhanced */}
       {(() => {
         const now = new Date();

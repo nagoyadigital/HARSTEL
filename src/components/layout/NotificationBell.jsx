@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Bell, ShieldAlert, Wrench, Package, AlertTriangle, Check, X } from 'lucide-react';
+import { Bell, ShieldAlert, Wrench, Package, AlertTriangle, Check } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 const typeIcons = {
   shakeng: ShieldAlert,
@@ -18,14 +19,24 @@ const typeColors = {
   system: 'text-slate-500 bg-slate-500/10',
 };
 
+const priorityBorder = {
+  critical: 'border-l-2 border-l-red-500',
+  high: 'border-l-2 border-l-amber-500',
+  medium: 'border-l-2 border-l-amber-400/50',
+};
+
 export default function NotificationBell() {
   const [open, setOpen] = useState(false);
-  const [notifications, setNotifications] = useState([]);
   const dropdownRef = useRef(null);
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    loadNotifications();
-  }, []);
+  // Use react-query for auto-refresh every 60s
+  const { data: notifications = [] } = useQuery({
+    queryKey: ['notifications'],
+    queryFn: () => base44.entities.Notification.list('-created_date', 30),
+    refetchInterval: 60000, // Refresh every 60 seconds
+    refetchOnWindowFocus: true,
+  });
 
   useEffect(() => {
     const handleClick = (e) => {
@@ -35,23 +46,17 @@ export default function NotificationBell() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
 
-  const loadNotifications = async () => {
-    try {
-      const data = await base44.entities.Notification.list('-created_date', 20);
-      setNotifications(data || []);
-    } catch (e) { /* entity might not exist yet */ }
-  };
-
   const markAsRead = async (id) => {
     await base44.entities.Notification.update(id, { read: true });
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    queryClient.invalidateQueries({ queryKey: ['notifications'] });
   };
 
   const markAllRead = async () => {
-    for (const n of notifications.filter(n => !n.read)) {
+    const unread = notifications.filter(n => !n.read);
+    for (const n of unread) {
       await base44.entities.Notification.update(n.id, { read: true });
     }
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    queryClient.invalidateQueries({ queryKey: ['notifications'] });
   };
 
   const unreadCount = notifications.filter(n => !n.read).length;
@@ -60,54 +65,68 @@ export default function NotificationBell() {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setOpen(!open)}
-        className="relative p-2 rounded-lg hover:bg-muted transition-colors"
+        className="relative p-2 rounded-lg hover:bg-muted transition-colors duration-200"
+        aria-label={`Notifikasi${unreadCount > 0 ? ` (${unreadCount} belum dibaca)` : ''}`}
       >
         <Bell className="w-[18px] h-[18px] text-muted-foreground" />
         {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center bg-primary text-primary-foreground text-[10px] font-bold rounded-full px-1">
-            {unreadCount > 9 ? '9+' : unreadCount}
+          <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center bg-primary text-primary-foreground text-[10px] font-bold rounded-full px-1 animate-pulse">
+            {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-80 bg-card border border-border rounded-xl shadow-xl z-50 overflow-hidden">
+        <div className="absolute right-0 mt-2 w-96 bg-card border border-border rounded-xl shadow-2xl shadow-black/30 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="flex items-center justify-between p-3 border-b border-border">
-            <h3 className="text-sm font-semibold">Notifikasi</h3>
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-semibold">Notifikasi</h3>
+              {unreadCount > 0 && (
+                <span className="text-[10px] font-bold bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">
+                  {unreadCount} baru
+                </span>
+              )}
+            </div>
             {unreadCount > 0 && (
-              <button onClick={markAllRead} className="text-xs text-primary hover:underline">
-                Tandai semua dibaca
+              <button onClick={markAllRead} className="text-xs text-primary hover:underline flex items-center gap-1">
+                <Check className="w-3 h-3" /> Tandai semua dibaca
               </button>
             )}
           </div>
-          <div className="max-h-[400px] overflow-y-auto">
+
+          <div className="max-h-[420px] overflow-y-auto">
             {notifications.length === 0 ? (
-              <div className="p-8 text-center">
-                <Bell className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
+              <div className="p-10 text-center">
+                <Bell className="w-10 h-10 text-muted-foreground/20 mx-auto mb-3" />
                 <p className="text-sm text-muted-foreground">Belum ada notifikasi</p>
+                <p className="text-xs text-muted-foreground mt-1">Notifikasi Shaken akan muncul otomatis</p>
               </div>
             ) : (
               notifications.map(n => {
                 const Icon = typeIcons[n.type] || AlertTriangle;
+                const borderClass = priorityBorder[n.priority] || '';
                 return (
                   <div
                     key={n.id}
                     onClick={() => { if (!n.read) markAsRead(n.id); }}
                     className={cn(
-                      "flex items-start gap-3 p-3 border-b border-border/50 hover:bg-muted/20 transition-colors cursor-pointer",
-                      !n.read && "bg-primary/5"
+                      "flex items-start gap-3 p-3 border-b border-border/50 hover:bg-muted/30 transition-colors duration-150 cursor-pointer",
+                      !n.read && "bg-primary/5",
+                      borderClass
                     )}
                   >
-                    <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center shrink-0", typeColors[n.type] || 'bg-muted')}>
+                    <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5", typeColors[n.type] || 'bg-muted')}>
                       <Icon className="w-4 h-4" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
-                        <p className={cn("text-sm", !n.read && "font-semibold")}>{n.title}</p>
+                        <p className={cn("text-sm leading-tight", !n.read ? "font-semibold" : "text-muted-foreground")}>{n.title}</p>
                         {!n.read && <div className="w-2 h-2 rounded-full bg-primary shrink-0 mt-1.5" />}
                       </div>
                       <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{n.message}</p>
-                      <p className="text-[10px] text-muted-foreground mt-1">{n.date ? format(new Date(n.date), 'dd MMM yyyy') : ''}</p>
+                      <p className="text-[10px] text-muted-foreground/70 mt-1.5">
+                        {n.created_date ? format(new Date(n.created_date), 'dd MMM yyyy, HH:mm') : n.date || ''}
+                      </p>
                     </div>
                   </div>
                 );

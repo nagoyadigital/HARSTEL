@@ -1,11 +1,18 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import Sidebar from './Sidebar';
 import TopBar from './TopBar';
 import PageTransition from '@/components/shared/PageTransition';
+import ShakenAlertPopup from '@/components/shaken/ShakenAlertPopup';
+import { generateShakenNotifications } from '@/lib/shaken-notification-checker';
 
 export default function AppLayout() {
+  // Auto-generate shaken notifications on app load
+  useEffect(() => {
+    generateShakenNotifications();
+  }, []);
+
   return (
     <motion.div
       className="min-h-screen bg-background"
@@ -22,6 +29,9 @@ export default function AppLayout() {
           </PageTransition>
         </main>
       </div>
+
+      {/* Shaken Priority Alert Popup */}
+      <ShakenAlertPopup />
     </motion.div>
   );
 }
