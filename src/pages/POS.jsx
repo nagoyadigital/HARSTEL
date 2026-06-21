@@ -81,7 +81,7 @@ export default function POS() {
             <div><Label>Tipe</Label><Select value={form.type} onValueChange={(v)=>setForm({...form,type:v,category:''})}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent><SelectItem value="Pemasukan">Pemasukan</SelectItem><SelectItem value="Pengeluaran">Pengeluaran</SelectItem></SelectContent></Select></div>
             <div><Label>Kategori *</Label><Select value={form.category} onValueChange={(v)=>setForm({...form,category:v})}><SelectTrigger><SelectValue placeholder="Pilih"/></SelectTrigger><SelectContent>{categories.map(c=><SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select></div>
             <div><Label>Keterangan</Label><Textarea value={form.description} onChange={(e)=>setForm({...form,description:e.target.value})}/></div>
-            <div><Label>Jumlah *</Label><Input type="number" value={form.amount} onChange={(e)=>setForm({...form,amount:e.target.value})} placeholder="Rp"/></div>
+            <div><Label>Jumlah *</Label><Input type="number" value={form.amount} onChange={(e)=>setForm({...form,amount:e.target.value})} placeholder="¥"/></div>
             <div><Label>Metode Pembayaran</Label><Select value={form.payment_method} onValueChange={(v)=>setForm({...form,payment_method:v})}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent>{PAYMENT_METHODS.map(p=><SelectItem key={p.value} value={p.value}>{p.value}</SelectItem>)}</SelectContent></Select></div>
             <div><Label>Nama Pelanggan</Label><Input value={form.customer_name} onChange={(e)=>setForm({...form,customer_name:e.target.value})}/></div>
           </div>

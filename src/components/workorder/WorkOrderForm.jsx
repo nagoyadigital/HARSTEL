@@ -114,7 +114,7 @@ export default function WorkOrderForm({ open, onClose, onSuccess }) {
             <Textarea value={form.complaint} onChange={(e) => set('complaint', e.target.value)} placeholder="Deskripsi keluhan..." rows={3} />
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <div><Label>Estimasi Biaya</Label><Input type="number" value={form.estimated_cost} onChange={(e) => set('estimated_cost', e.target.value)} placeholder="Rp" /></div>
+            <div><Label>Estimasi Biaya</Label><Input type="number" value={form.estimated_cost} onChange={(e) => set('estimated_cost', e.target.value)} placeholder="¥" /></div>
             <div><Label>Estimasi Waktu</Label><Input value={form.estimated_duration} onChange={(e) => set('estimated_duration', e.target.value)} placeholder="2 jam" /></div>
           </div>
         </div>
