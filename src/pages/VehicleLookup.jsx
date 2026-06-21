@@ -140,7 +140,7 @@ export default function VehicleLookup() {
                     {result.customer.join_date && (
                       <div className="flex items-center gap-2 text-sm">
                         <Calendar className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                        <span>Bergabung: {format(new Date(result.customer.join_date), 'dd MMM yyyy')}</span>
+                        <span>Bergabung: {format(new Date(result.customer.join_date), 'yyyy/MM/dd')}</span>
                       </div>
                     )}
                   </div>
@@ -198,13 +198,13 @@ export default function VehicleLookup() {
                   <div className="col-span-2 bg-muted/30 rounded-lg p-2.5">
                     <p className="text-xs text-muted-foreground mb-1">Status Shakeng (車検)</p>
                     <ShakengBadge status={result.vehicle.shakeng_status || (result.vehicle.shakeng_expiry ? (new Date(result.vehicle.shakeng_expiry) < new Date() ? 'Habis' : (Math.ceil((new Date(result.vehicle.shakeng_expiry) - new Date()) / (86400000)) <= 30 ? 'Segera Habis' : 'Valid')) : '')} />
-                    {result.vehicle.shakeng_expiry && <p className="text-xs text-muted-foreground mt-1">Berlaku sampai: {format(new Date(result.vehicle.shakeng_expiry), 'dd MMM yyyy')}</p>}
+                    {result.vehicle.shakeng_expiry && <p className="text-xs text-muted-foreground mt-1">Berlaku sampai: {format(new Date(result.vehicle.shakeng_expiry), 'yyyy/MM/dd')}</p>}
                   </div>
                 </div>
                 {result.vehicle.purchase_date && (
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Calendar className="w-3 h-3" />
-                    Dibeli: {format(new Date(result.vehicle.purchase_date), 'dd MMM yyyy')}
+                    Dibeli: {format(new Date(result.vehicle.purchase_date), 'yyyy/MM/dd')}
                   </div>
                 )}
               </div>
@@ -249,7 +249,7 @@ export default function VehicleLookup() {
                           <div>
                             <p className="text-sm font-semibold">{wo.wo_number || `WO-${wo.id?.slice(-6)}`}</p>
                             <p className="text-xs text-muted-foreground">
-                              {wo.created_date ? format(new Date(wo.created_date), 'dd MMM yyyy') : '-'} • {wo.mechanic_name || 'Belum ditugaskan'}
+                              {wo.created_date ? format(new Date(wo.created_date), 'yyyy/MM/dd') : '-'} • {wo.mechanic_name || 'Belum ditugaskan'}
                             </p>
                           </div>
                         </div>

@@ -153,7 +153,7 @@ export default function VehicleSearchWidget() {
               </div>
               <div className="mt-2 bg-muted/30 rounded-lg p-2">
                 <ShakengBadge status={result.vehicle.shakeng_status || (result.vehicle.shakeng_expiry ? (new Date(result.vehicle.shakeng_expiry) < new Date() ? 'Habis' : 'Segera Habis') : '')} />
-                {result.vehicle.shakeng_expiry && <p className="text-[10px] text-muted-foreground mt-1">Berlaku: {format(new Date(result.vehicle.shakeng_expiry), 'dd MMM yyyy')}</p>}
+                {result.vehicle.shakeng_expiry && <p className="text-[10px] text-muted-foreground mt-1">Berlaku: {format(new Date(result.vehicle.shakeng_expiry), 'yyyy/MM/dd')}</p>}
               </div>
             </div>
           </div>
@@ -178,7 +178,7 @@ export default function VehicleSearchWidget() {
                           <Wrench className="w-3.5 h-3.5 text-muted-foreground" />
                           <div>
                             <p className="text-xs font-semibold">{wo.wo_number || `WO-${wo.id?.slice(-6)}`}</p>
-                            <p className="text-[10px] text-muted-foreground">{wo.created_date ? format(new Date(wo.created_date), 'dd MMM yyyy') : '-'} • {wo.mechanic_name || '-'}</p>
+                            <p className="text-[10px] text-muted-foreground">{wo.created_date ? format(new Date(wo.created_date), 'yyyy/MM/dd') : '-'} • {wo.mechanic_name || '-'}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">

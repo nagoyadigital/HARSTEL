@@ -41,7 +41,7 @@ export default function WorkOrders() {
     { header: 'Mekanik', key: 'mechanic_name' },
     { header: 'Status', render: (row) => <StatusBadge status={row.status} /> },
     { header: 'Total', render: (row) => <span className="font-semibold">¥ {(row.total_cost || 0).toLocaleString('ja-JP')}</span> },
-    { header: 'Tanggal', render: (row) => row.created_date ? format(new Date(row.created_date), 'dd MMM yyyy') : '-' },
+    { header: 'Tanggal', render: (row) => row.created_date ? format(new Date(row.created_date), 'yyyy/MM/dd') : '-' },
   ];
 
   return (

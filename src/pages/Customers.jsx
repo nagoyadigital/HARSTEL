@@ -92,7 +92,7 @@ export default function Customers() {
     { header: 'Alamat', render: (row) => row.address ? <span className="flex items-center gap-1.5 text-muted-foreground"><MapPin className="w-3.5 h-3.5" />{row.address}</span> : '-' },
     { header: 'Kunjungan', render: (row) => <span className="font-medium">{row.total_visits || 0}</span> },
     { header: 'Total Pengeluaran', render: (row) => <span className="font-medium">¥ {(row.total_spending || 0).toLocaleString('ja-JP')}</span> },
-    { header: 'Bergabung', render: (row) => row.join_date ? format(new Date(row.join_date), 'dd MMM yyyy') : '-' },
+    { header: 'Bergabung', render: (row) => row.join_date ? format(new Date(row.join_date), 'yyyy/MM/dd') : '-' },
   ];
 
   return (

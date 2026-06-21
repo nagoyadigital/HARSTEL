@@ -322,7 +322,7 @@ export default function Dashboard() {
                       <div>
                         <p className="text-sm font-semibold">{v.plate_number}</p>
                         <p className="text-xs text-muted-foreground">{v.brand} {v.model} • {v.customer_name}</p>
-                        <p className="text-xs text-red-400 font-medium mt-0.5">Sisa {v.diffDays} hari — {format(v.expDate, 'dd MMM yyyy')}</p>
+                        <p className="text-xs text-red-400 font-medium mt-0.5">Sisa {v.diffDays} hari — {format(v.expDate, 'yyyy/MM/dd')}</p>
                       </div>
                       <ShakengBadge status="Segera Habis" />
                     </Link>
@@ -342,7 +342,7 @@ export default function Dashboard() {
                       <div>
                         <p className="text-sm font-semibold">{v.plate_number}</p>
                         <p className="text-xs text-muted-foreground">{v.brand} {v.model} • {v.customer_name}</p>
-                        <p className="text-xs text-amber-500 font-medium mt-0.5">Sisa {v.diffDays} hari — {format(v.expDate, 'dd MMM yyyy')}</p>
+                        <p className="text-xs text-amber-500 font-medium mt-0.5">Sisa {v.diffDays} hari — {format(v.expDate, 'yyyy/MM/dd')}</p>
                       </div>
                       <ShakengBadge status="Segera Habis" />
                     </Link>
@@ -362,7 +362,7 @@ export default function Dashboard() {
                       <div>
                         <p className="text-sm font-semibold">{v.plate_number}</p>
                         <p className="text-xs text-muted-foreground">{v.brand} {v.model} • {v.customer_name}</p>
-                        <p className="text-xs text-amber-400 font-medium mt-0.5">Sisa {v.diffDays} hari — {format(v.expDate, 'dd MMM yyyy')}</p>
+                        <p className="text-xs text-amber-400 font-medium mt-0.5">Sisa {v.diffDays} hari — {format(v.expDate, 'yyyy/MM/dd')}</p>
                       </div>
                       <ShakengBadge status="Valid" />
                     </Link>

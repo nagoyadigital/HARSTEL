@@ -35,7 +35,7 @@ export default function Bookings() {
 
   const columns = [
     { header:'Pelanggan', render:(row)=><div><p className="font-medium">{row.customer_name}</p><p className="text-xs text-muted-foreground">{row.vehicle_info}</p></div> },
-    { header:'Tanggal', render:(row)=>row.booking_date?format(new Date(row.booking_date),'dd MMM yyyy'):'-' },
+    { header:'Tanggal', render:(row)=>row.booking_date?format(new Date(row.booking_date),'yyyy/MM/dd'):'-' },
     { header:'Jam', key:'booking_time' },
     { header:'Jenis Service', key:'service_type' },
     { header:'Status', render:(row)=><StatusBadge status={row.status}/> },

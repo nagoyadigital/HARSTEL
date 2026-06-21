@@ -180,8 +180,8 @@ export default function ShakenDetail({ record, open, onClose, onUpdate }) {
               <InfoRow label="Kendaraan" value={`${record.vehicle_plate} — ${record.vehicle_info}`} />
               <InfoRow label="Pelanggan" value={record.customer_name} />
               <Separator className="my-2" />
-              <InfoRow label="Shaken Terakhir" value={record.shaken_date ? format(new Date(record.shaken_date), 'dd MMMM yyyy') : '-'} />
-              <InfoRow label="Kadaluarsa" value={record.shaken_expiry ? format(new Date(record.shaken_expiry), 'dd MMMM yyyy') : '-'} />
+              <InfoRow label="Shaken Terakhir" value={record.shaken_date ? format(new Date(record.shaken_date), 'yyyy/MM/dd') : '-'} />
+              <InfoRow label="Kadaluarsa" value={record.shaken_expiry ? format(new Date(record.shaken_expiry), 'yyyy/MM/dd') : '-'} />
               <InfoRow
                 label="Sisa Hari"
                 value={formatDaysRemaining(daysRemaining)}
@@ -189,7 +189,7 @@ export default function ShakenDetail({ record, open, onClose, onUpdate }) {
               />
               <Separator className="my-2" />
               <InfoRow label="Pajak Tahunan (自動車税)" value={record.annual_tax ? `¥ ${record.annual_tax.toLocaleString('ja-JP')}` : '-'} />
-              <InfoRow label="Jatuh Tempo Pajak" value={record.annual_tax_due_date ? format(new Date(record.annual_tax_due_date), 'dd MMM yyyy') : '-'} />
+              <InfoRow label="Jatuh Tempo Pajak" value={record.annual_tax_due_date ? format(new Date(record.annual_tax_due_date), 'yyyy/MM/dd') : '-'} />
               <InfoRow label="Pajak Bobot (重量税)" value={record.weight_tax ? `¥ ${record.weight_tax.toLocaleString('ja-JP')}` : '-'} />
             </div>
             {record.notes && (
@@ -206,14 +206,14 @@ export default function ShakenDetail({ record, open, onClose, onUpdate }) {
               <h4 className="text-sm font-semibold mb-2">自賠責保険 (Jibaiseki)</h4>
               <InfoRow label="Perusahaan" value={record.jibaiseki_company} />
               <InfoRow label="No. Polis" value={record.jibaiseki_number} />
-              <InfoRow label="Kadaluarsa" value={record.jibaiseki_expiry ? format(new Date(record.jibaiseki_expiry), 'dd MMM yyyy') : '-'} />
+              <InfoRow label="Kadaluarsa" value={record.jibaiseki_expiry ? format(new Date(record.jibaiseki_expiry), 'yyyy/MM/dd') : '-'} />
               <InfoRow label="Premi" value={record.jibaiseki_premium ? `¥ ${record.jibaiseki_premium.toLocaleString('ja-JP')}` : '-'} />
             </div>
             <div className="bg-muted/30 rounded-xl p-4 space-y-1">
               <h4 className="text-sm font-semibold mb-2">任意保険 (Nini Hoken)</h4>
               <InfoRow label="Perusahaan" value={record.nini_hoken_company} />
               <InfoRow label="No. Polis" value={record.nini_hoken_number} />
-              <InfoRow label="Kadaluarsa" value={record.nini_hoken_expiry ? format(new Date(record.nini_hoken_expiry), 'dd MMM yyyy') : '-'} />
+              <InfoRow label="Kadaluarsa" value={record.nini_hoken_expiry ? format(new Date(record.nini_hoken_expiry), 'yyyy/MM/dd') : '-'} />
               <InfoRow label="Premi" value={record.nini_hoken_premium ? `¥ ${record.nini_hoken_premium.toLocaleString('ja-JP')}` : '-'} />
             </div>
           </TabsContent>
@@ -315,8 +315,8 @@ export default function ShakenDetail({ record, open, onClose, onUpdate }) {
                   {history.map(h => (
                     <div key={h.id} className="flex items-center justify-between p-3 rounded-lg bg-background border border-border">
                       <div>
-                        <p className="text-sm font-medium">{h.shaken_date ? format(new Date(h.shaken_date), 'dd MMM yyyy') : '-'}</p>
-                        <p className="text-xs text-muted-foreground">s/d {h.shaken_expiry ? format(new Date(h.shaken_expiry), 'dd MMM yyyy') : '-'}</p>
+                        <p className="text-sm font-medium">{h.shaken_date ? format(new Date(h.shaken_date), 'yyyy/MM/dd') : '-'}</p>
+                        <p className="text-xs text-muted-foreground">s/d {h.shaken_expiry ? format(new Date(h.shaken_expiry), 'yyyy/MM/dd') : '-'}</p>
                       </div>
                       <div className="text-right">
                         <p className="text-sm font-semibold">¥ {(h.total_estimated_cost || 0).toLocaleString('ja-JP')}</p>

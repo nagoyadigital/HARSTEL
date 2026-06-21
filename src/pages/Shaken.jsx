@@ -80,11 +80,11 @@ export default function Shaken() {
     { header: 'Pelanggan', key: 'customer_name' },
     {
       header: 'Shaken Terakhir',
-      render: (row) => row.shaken_date ? format(new Date(row.shaken_date), 'dd MMM yyyy') : '-',
+      render: (row) => row.shaken_date ? format(new Date(row.shaken_date), 'yyyy/MM/dd') : '-',
     },
     {
       header: 'Kadaluarsa',
-      render: (row) => row.shaken_expiry ? format(new Date(row.shaken_expiry), 'dd MMM yyyy') : '-',
+      render: (row) => row.shaken_expiry ? format(new Date(row.shaken_expiry), 'yyyy/MM/dd') : '-',
     },
     {
       header: 'Sisa Hari',

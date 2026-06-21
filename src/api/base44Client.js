@@ -17,6 +17,7 @@ const entities = {
   StockMovement: createEntityApi('StockMovement'),
   Transaction: createEntityApi('Transaction'),
   Vehicle: createEntityApi('Vehicle'),
+  VehicleBrand: createEntityApi('VehicleBrand'),
   WorkOrder: createEntityApi('WorkOrder'),
 }
 

@@ -125,7 +125,7 @@ export default function NotificationBell() {
                       </div>
                       <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{n.message}</p>
                       <p className="text-[10px] text-muted-foreground/70 mt-1.5">
-                        {n.created_date ? format(new Date(n.created_date), 'dd MMM yyyy, HH:mm') : n.date || ''}
+                        {n.created_date ? format(new Date(n.created_date), 'yyyy/MM/dd HH:mm') : n.date || ''}
                       </p>
                     </div>
                   </div>

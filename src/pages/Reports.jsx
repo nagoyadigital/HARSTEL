@@ -50,7 +50,7 @@ export default function Reports() {
   const woColumns = [
     { header:'No. WO', render:(row)=><span className="font-mono font-semibold text-primary">{row.wo_number||`WO-${row.id?.slice(-6)}`}</span> },
     { header:'Pelanggan', key:'customer_name' },
-    { header:'Tanggal', render:(row)=>row.created_date?format(new Date(row.created_date),'dd MMM yyyy'):'-' },
+    { header:'Tanggal', render:(row)=>row.created_date?format(new Date(row.created_date),'yyyy/MM/dd'):'-' },
     { header:'Total', render:(row)=><span className="font-semibold">¥ {(row.total_cost||0).toLocaleString('ja-JP')}</span> },
   ];
 
@@ -138,7 +138,7 @@ export default function Reports() {
           const shakenColumns = [
             { header: 'Kendaraan', render: (row) => <div><p className="font-semibold text-sm">{row.vehicle_plate}</p><p className="text-xs text-muted-foreground">{row.vehicle_info}</p></div> },
             { header: 'Pelanggan', key: 'customer_name' },
-            { header: 'Kadaluarsa', render: (row) => row.shaken_expiry ? format(new Date(row.shaken_expiry), 'dd MMM yyyy') : '-' },
+            { header: 'Kadaluarsa', render: (row) => row.shaken_expiry ? format(new Date(row.shaken_expiry), 'yyyy/MM/dd') : '-' },
             { header: 'Sisa Hari', render: (row) => { const { daysRemaining, color } = getShakenStatus(row.shaken_expiry); const c = color === 'red' ? 'text-red-500' : color === 'amber' ? 'text-amber-500' : 'text-emerald-500'; return <span className={`font-semibold ${c}`}>{formatDaysRemaining(daysRemaining)}</span>; } },
             { header: 'Status', render: (row) => <ShakenStatusBadge expiryDate={row.shaken_expiry} /> },
             { header: 'Est. Biaya', render: (row) => <span className="font-semibold">¥ {(row.total_estimated_cost || 0).toLocaleString('ja-JP')}</span> },

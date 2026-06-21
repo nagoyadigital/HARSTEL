@@ -46,7 +46,7 @@ export default function Inventory() {
   const openMovement = (type) => { setMovementType(type); setShowMovement(true); };
 
   const columns = [
-    { header:'Tanggal', render:(row) => row.date || format(new Date(row.created_date), 'dd MMM yyyy') },
+    { header:'Tanggal', render:(row) => row.date || format(new Date(row.created_date), 'yyyy/MM/dd') },
     { header:'Sparepart', render:(row) => <span className="font-medium">{row.sparepart_name}</span> },
     { header:'Tipe', render:(row) => { const c={Masuk:'bg-emerald-100 text-emerald-800',Keluar:'bg-red-100 text-red-800',Adjustment:'bg-blue-100 text-blue-800'}; return <Badge className={c[row.type]||'bg-muted'}>{row.type}</Badge>; }},
     { header:'Jumlah', render:(row) => <span className="font-semibold">{row.quantity}</span> },
