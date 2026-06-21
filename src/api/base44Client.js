@@ -11,6 +11,7 @@ const entities = {
   Customer: createEntityApi('Customer'),
   Mechanic: createEntityApi('Mechanic'),
   Notification: createEntityApi('Notification'),
+  Shaken: createEntityApi('Shaken'),
   Sparepart: createEntityApi('Sparepart'),
   StockMovement: createEntityApi('StockMovement'),
   Transaction: createEntityApi('Transaction'),

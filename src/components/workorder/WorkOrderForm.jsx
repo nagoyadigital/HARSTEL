@@ -8,6 +8,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { ShieldAlert } from 'lucide-react';
+import { getShakenStatus, formatDaysRemaining } from '@/lib/shaken-utils';
 
 export default function WorkOrderForm({ open, onClose, onSuccess }) {
   const [form, setForm] = useState({
@@ -72,6 +74,34 @@ export default function WorkOrderForm({ open, onClose, onSuccess }) {
               <SelectContent>{customerVehicles.map(v => <SelectItem key={v.id} value={v.id}>{v.plate_number} - {v.brand} {v.model}</SelectItem>)}</SelectContent>
             </Select>
           </div>
+          {/* Shaken Warning Alert */}
+          {(() => {
+            if (!form.vehicle_id) return null;
+            const veh = vehicles.find(v => v.id === form.vehicle_id);
+            if (!veh?.shakeng_expiry) return null;
+            const { daysRemaining, color, status } = getShakenStatus(veh.shakeng_expiry);
+            if (daysRemaining === null || daysRemaining > 90) return null;
+            const borderColor = color === 'red' ? 'border-red-500/30 bg-red-500/5' : 'border-amber-500/30 bg-amber-500/5';
+            const textColor = color === 'red' ? 'text-red-500' : 'text-amber-500';
+            return (
+              <div className={`rounded-lg border p-3 ${borderColor}`}>
+                <div className="flex items-start gap-2">
+                  <ShieldAlert className={`w-4 h-4 mt-0.5 flex-shrink-0 ${textColor}`} />
+                  <div className="flex-1">
+                    <p className={`text-sm font-semibold ${textColor}`}>
+                      Shaken (車検) {status === 'Expired' ? 'Sudah Expired!' : 'Akan Habis!'}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {veh.plate_number} — {formatDaysRemaining(daysRemaining)}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Sarankan pelanggan untuk melakukan perpanjangan Shaken bersamaan dengan servis ini.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
           <div>
             <Label>Mekanik</Label>
             <Select value={form.mechanic_id} onValueChange={(v) => set('mechanic_id', v)}>

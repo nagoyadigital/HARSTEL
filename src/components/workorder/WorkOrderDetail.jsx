@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,9 +11,9 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import StatusBadge from '@/components/shared/StatusBadge';
 import InspectionForm from './InspectionForm';
-import { Plus, Trash2, Wrench, Package } from 'lucide-react';
+import { Trash2, Wrench, Package, ShieldAlert } from 'lucide-react';
 import { toast } from 'sonner';
-import { format } from 'date-fns';
+import { getShakenStatus, formatDaysRemaining } from '@/lib/shaken-utils';
 
 const STATUSES = ['Menunggu', 'Inspeksi', 'Estimasi', 'Menunggu Approval', 'Sedang Dikerjakan', 'Menunggu Sparepart', 'Quality Check', 'Selesai', 'Sudah Diambil'];
 
@@ -23,6 +23,15 @@ export default function WorkOrderDetail({ workOrder, open, onClose, onUpdate }) 
   const [items, setItems] = useState(workOrder.items || []);
   const [diagnosis, setDiagnosis] = useState(workOrder.diagnosis || '');
   const [inspection, setInspection] = useState(workOrder.inspection || {});
+
+  // Fetch vehicle to check shaken status
+  const { data: vehicles = [] } = useQuery({
+    queryKey: ['vehicles'],
+    queryFn: () => base44.entities.Vehicle.list(),
+  });
+  const vehicle = vehicles.find(v => v.id === workOrder.vehicle_id);
+  const shakenInfo = vehicle?.shakeng_expiry ? getShakenStatus(vehicle.shakeng_expiry) : null;
+  const showShakenWarning = shakenInfo && shakenInfo.daysRemaining !== null && shakenInfo.daysRemaining <= 90;
 
   const updateMutation = useMutation({
     mutationFn: (data) => base44.entities.WorkOrder.update(workOrder.id, data),
@@ -87,6 +96,20 @@ export default function WorkOrderDetail({ workOrder, open, onClose, onUpdate }) 
             <TabsTrigger value="inspection">Inspeksi</TabsTrigger>
             <TabsTrigger value="items">Item & Biaya</TabsTrigger>
           </TabsList>
+
+          {/* Shaken Warning Banner */}
+          {showShakenWarning && (
+            <div className={`mt-3 rounded-lg border p-3 ${shakenInfo.color === 'red' ? 'border-red-500/30 bg-red-500/5' : 'border-amber-500/30 bg-amber-500/5'}`}>
+              <div className="flex items-center gap-2">
+                <ShieldAlert className={`w-4 h-4 ${shakenInfo.color === 'red' ? 'text-red-500' : 'text-amber-500'}`} />
+                <p className={`text-sm font-semibold ${shakenInfo.color === 'red' ? 'text-red-500' : 'text-amber-500'}`}>
+                  Shaken (車検) {shakenInfo.status === 'Expired' ? 'Expired!' : 'Akan Habis!'}
+                </p>
+                <span className="text-xs text-muted-foreground ml-auto">{formatDaysRemaining(shakenInfo.daysRemaining)}</span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1 ml-6">Informasikan pelanggan untuk perpanjangan Shaken.</p>
+            </div>
+          )}
 
           <TabsContent value="detail" className="space-y-4 mt-4">
             <div>

@@ -16,6 +16,7 @@ import POS from '@/pages/POS';
 import Bookings from '@/pages/Bookings';
 import Reports from '@/pages/Reports';
 import VehicleLookup from '@/pages/VehicleLookup';
+import Shaken from '@/pages/Shaken';
 import AppLayout from '@/components/layout/AppLayout';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Login from '@/pages/Login';
@@ -67,6 +68,7 @@ function AppRoutes() {
           <Route path="/pos" element={<POS />} />
           <Route path="/bookings" element={<Bookings />} />
           <Route path="/reports" element={<Reports />} />
+          <Route path="/shaken" element={<Shaken />} />
           <Route path="/vehicle-lookup" element={<VehicleLookup />} />
         </Route>
       </Route>

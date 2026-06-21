@@ -2,7 +2,7 @@ import React from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import {
-  Car, Users, Wrench, DollarSign, Clock, AlertCircle, UserCog, ArrowRight, ShieldAlert
+  Car, DollarSign, Clock, AlertCircle, ArrowRight, ShieldAlert
 } from 'lucide-react';
 import StatCard from '@/components/shared/StatCard';
 import StatusBadge from '@/components/shared/StatusBadge';
@@ -199,42 +199,121 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Shakeng Alerts */}
+      {/* Shaken (車検) Alerts - Enhanced */}
       {(() => {
         const now = new Date();
-        const expiringVehicles = vehicles.filter(v => {
-          if (!v.shakeng_expiry) return false;
-          const exp = new Date(v.shakeng_expiry);
-          const diffDays = Math.ceil((exp - now) / (86400000));
-          return diffDays <= 30;
-        });
-        if (expiringVehicles.length === 0) return null;
+
+        // Combine vehicle shakeng data with dedicated Shaken records
+        const shakenAlerts = vehicles
+          .filter(v => v.shakeng_expiry)
+          .map(v => {
+            const exp = new Date(v.shakeng_expiry);
+            const diffDays = Math.ceil((exp - now) / 86400000);
+            return { ...v, diffDays, expDate: exp };
+          })
+          .filter(v => v.diffDays <= 90)
+          .sort((a, b) => a.diffDays - b.diffDays);
+
+        if (shakenAlerts.length === 0) return null;
+
+        const expired = shakenAlerts.filter(v => v.diffDays < 0);
+        const critical30 = shakenAlerts.filter(v => v.diffDays >= 0 && v.diffDays <= 30);
+        const warning60 = shakenAlerts.filter(v => v.diffDays > 30 && v.diffDays <= 60);
+        const notice90 = shakenAlerts.filter(v => v.diffDays > 60 && v.diffDays <= 90);
+
         return (
-          <div className="bg-card rounded-xl border border-amber-500/20 p-5">
-            <div className="flex items-center gap-2 mb-4">
-              <ShieldAlert className="w-5 h-5 text-amber-500" />
-              <h3 className="text-sm font-semibold">Shakeng (車検) — Perhatian</h3>
-              <span className="text-xs text-amber-600 bg-amber-500/10 px-2 py-0.5 rounded-full">{expiringVehicles.length} kendaraan</span>
+          <div className="bg-card rounded-xl border border-border p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <ShieldAlert className="w-5 h-5 text-primary" />
+                <h3 className="text-sm font-semibold">Shaken (車検) — Peringatan</h3>
+                <span className="text-xs text-white bg-red-600 px-2 py-0.5 rounded-full font-semibold">{shakenAlerts.length}</span>
+              </div>
+              <Link to="/shaken" className="text-xs text-primary hover:underline flex items-center gap-1">
+                Kelola Shaken <ArrowRight className="w-3 h-3" />
+              </Link>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {expiringVehicles.slice(0, 6).map(v => {
-                const exp = new Date(v.shakeng_expiry);
-                const diffDays = Math.ceil((exp - now) / (86400000));
-                const status = diffDays < 0 ? 'Habis' : 'Segera Habis';
-                return (
-                  <Link key={v.id} to="/vehicle-lookup" className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
-                    <div>
-                      <p className="text-sm font-semibold">{v.plate_number}</p>
-                      <p className="text-xs text-muted-foreground">{v.brand} {v.model} • {v.customer_name}</p>
-                      <p className="text-xs text-amber-600 mt-0.5">
-                        {diffDays < 0 ? `Habis ${Math.abs(diffDays)} hari lalu` : `Sisa ${diffDays} hari`} — {format(exp, 'dd MMM yyyy')}
-                      </p>
-                    </div>
-                    <ShakengBadge status={status} />
-                  </Link>
-                );
-              })}
-            </div>
+
+            {/* Severity groups */}
+            {expired.length > 0 && (
+              <div>
+                <p className="text-xs font-semibold text-red-500 mb-2 flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" /> EXPIRED ({expired.length})
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                  {expired.slice(0, 3).map(v => (
+                    <Link key={v.id} to="/shaken" className="flex items-center justify-between p-3 rounded-lg bg-red-500/5 border border-red-500/20 hover:bg-red-500/10 transition-colors">
+                      <div>
+                        <p className="text-sm font-semibold">{v.plate_number}</p>
+                        <p className="text-xs text-muted-foreground">{v.brand} {v.model}</p>
+                        <p className="text-xs text-red-500 font-medium mt-0.5">Expired {Math.abs(v.diffDays)} hari lalu</p>
+                      </div>
+                      <ShakengBadge status="Habis" />
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {critical30.length > 0 && (
+              <div>
+                <p className="text-xs font-semibold text-red-400 mb-2 flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-red-400" /> H-30 HARI ({critical30.length})
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                  {critical30.slice(0, 3).map(v => (
+                    <Link key={v.id} to="/shaken" className="flex items-center justify-between p-3 rounded-lg bg-red-500/5 border border-red-500/10 hover:bg-red-500/10 transition-colors">
+                      <div>
+                        <p className="text-sm font-semibold">{v.plate_number}</p>
+                        <p className="text-xs text-muted-foreground">{v.brand} {v.model} • {v.customer_name}</p>
+                        <p className="text-xs text-red-400 font-medium mt-0.5">Sisa {v.diffDays} hari — {format(v.expDate, 'dd MMM yyyy')}</p>
+                      </div>
+                      <ShakengBadge status="Segera Habis" />
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {warning60.length > 0 && (
+              <div>
+                <p className="text-xs font-semibold text-amber-500 mb-2 flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-amber-500" /> H-60 HARI ({warning60.length})
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                  {warning60.slice(0, 3).map(v => (
+                    <Link key={v.id} to="/shaken" className="flex items-center justify-between p-3 rounded-lg bg-amber-500/5 border border-amber-500/10 hover:bg-amber-500/10 transition-colors">
+                      <div>
+                        <p className="text-sm font-semibold">{v.plate_number}</p>
+                        <p className="text-xs text-muted-foreground">{v.brand} {v.model} • {v.customer_name}</p>
+                        <p className="text-xs text-amber-500 font-medium mt-0.5">Sisa {v.diffDays} hari — {format(v.expDate, 'dd MMM yyyy')}</p>
+                      </div>
+                      <ShakengBadge status="Segera Habis" />
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {notice90.length > 0 && (
+              <div>
+                <p className="text-xs font-semibold text-amber-400 mb-2 flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-amber-400" /> H-90 HARI ({notice90.length})
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                  {notice90.slice(0, 3).map(v => (
+                    <Link key={v.id} to="/shaken" className="flex items-center justify-between p-3 rounded-lg bg-amber-500/5 border border-amber-500/10 hover:bg-amber-500/10 transition-colors">
+                      <div>
+                        <p className="text-sm font-semibold">{v.plate_number}</p>
+                        <p className="text-xs text-muted-foreground">{v.brand} {v.model} • {v.customer_name}</p>
+                        <p className="text-xs text-amber-400 font-medium mt-0.5">Sisa {v.diffDays} hari — {format(v.expDate, 'dd MMM yyyy')}</p>
+                      </div>
+                      <ShakengBadge status="Valid" />
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         );
       })()}
