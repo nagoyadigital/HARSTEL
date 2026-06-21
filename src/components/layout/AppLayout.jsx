@@ -6,11 +6,13 @@ import TopBar from './TopBar';
 import PageTransition from '@/components/shared/PageTransition';
 import ShakenAlertPopup from '@/components/shaken/ShakenAlertPopup';
 import { generateShakenNotifications } from '@/lib/shaken-notification-checker';
+import { runDailyReminderCheck } from '@/lib/shaken-reminder-engine';
 
 export default function AppLayout() {
-  // Auto-generate shaken notifications on app load
+  // Auto-generate shaken notifications and run reminder check on app load
   useEffect(() => {
     generateShakenNotifications();
+    runDailyReminderCheck();
   }, []);
 
   return (

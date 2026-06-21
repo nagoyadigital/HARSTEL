@@ -206,7 +206,7 @@ export default function ShakenForm({ open, onClose, onSuccess, editData }) {
           {/* Reminders */}
           <div>
             <h4 className="text-sm font-semibold mb-3">Pengingat Otomatis</h4>
-            <div className="flex flex-wrap gap-6">
+            <div className="flex flex-wrap gap-6 mb-4">
               <div className="flex items-center gap-2">
                 <Checkbox id="rem-wa" checked={form.reminder_whatsapp} onCheckedChange={v => updateField('reminder_whatsapp', v)} />
                 <Label htmlFor="rem-wa" className="cursor-pointer">WhatsApp</Label>
@@ -220,7 +220,24 @@ export default function ShakenForm({ open, onClose, onSuccess, editData }) {
                 <Label htmlFor="rem-sms" className="cursor-pointer">SMS</Label>
               </div>
             </div>
-            <p className="text-xs text-muted-foreground mt-2">Reminder dikirim pada H-90, H-60, dan H-30 sebelum Shaken kadaluarsa</p>
+            <p className="text-xs text-muted-foreground mb-2">Jadwal pengingat (centang yang aktif):</p>
+            <div className="flex flex-wrap gap-3">
+              {[90, 60, 30, 14, 7, 1].map(day => (
+                <div key={day} className="flex items-center gap-1.5">
+                  <Checkbox
+                    id={`day-${day}`}
+                    checked={form.reminder_days.includes(day)}
+                    onCheckedChange={(checked) => {
+                      const days = checked
+                        ? [...form.reminder_days, day].sort((a, b) => b - a)
+                        : form.reminder_days.filter(d => d !== day);
+                      updateField('reminder_days', days);
+                    }}
+                  />
+                  <Label htmlFor={`day-${day}`} className="text-xs cursor-pointer">H-{day}</Label>
+                </div>
+              ))}
+            </div>
           </div>
 
           <Separator />

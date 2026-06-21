@@ -1,29 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShieldAlert, ShieldX, AlertTriangle, ArrowRight, X, Clock } from 'lucide-react';
+import { ShieldAlert, ShieldX, AlertTriangle, ArrowRight, X, Clock, CalendarClock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { checkShakenNotifications } from '@/lib/shaken-notification-checker';
+import { format } from 'date-fns';
 
 const DISMISS_KEY = 'harstel_shaken_popup_dismissed';
-const DISMISS_DURATION = 4 * 60 * 60 * 1000; // 4 hours
+const DISMISS_TOMORROW_KEY = 'harstel_shaken_popup_tomorrow';
 
 export default function ShakenAlertPopup() {
   const [visible, setVisible] = useState(false);
   const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     checkAndShow();
   }, []);
 
   const checkAndShow = async () => {
-    // Check if dismissed recently
+    const today = format(new Date(), 'yyyy-MM-dd');
+
+    // Check if already dismissed today (max 1x per day per login)
     const dismissed = localStorage.getItem(DISMISS_KEY);
-    if (dismissed && (Date.now() - Number(dismissed)) < DISMISS_DURATION) {
-      setLoading(false);
-      return;
-    }
+    if (dismissed === today) return;
+
+    // Check "Ingatkan Besok" - only show again tomorrow
+    const tomorrow = localStorage.getItem(DISMISS_TOMORROW_KEY);
+    if (tomorrow === today) return;
 
     try {
       const results = await checkShakenNotifications();
@@ -36,13 +39,19 @@ export default function ShakenAlertPopup() {
       }
     } catch (e) {
       console.error('Shaken check failed:', e);
-    } finally {
-      setLoading(false);
     }
   };
 
-  const handleDismiss = () => {
-    localStorage.setItem(DISMISS_KEY, String(Date.now()));
+  const handleClose = () => {
+    // Dismissed for today (won't show again today)
+    localStorage.setItem(DISMISS_KEY, format(new Date(), 'yyyy-MM-dd'));
+    setVisible(false);
+  };
+
+  const handleRemindTomorrow = () => {
+    // Set to remind again tomorrow
+    localStorage.setItem(DISMISS_TOMORROW_KEY, format(new Date(), 'yyyy-MM-dd'));
+    localStorage.setItem(DISMISS_KEY, format(new Date(), 'yyyy-MM-dd'));
     setVisible(false);
   };
 
@@ -90,8 +99,9 @@ export default function ShakenAlertPopup() {
                   </div>
                 </div>
                 <button
-                  onClick={handleDismiss}
+                  onClick={handleClose}
                   className="text-muted-foreground hover:text-foreground transition-colors p-1"
+                  aria-label="Tutup"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -124,7 +134,7 @@ export default function ShakenAlertPopup() {
                 )}
               </div>
 
-              {/* Vehicle List (max 5) */}
+              {/* Vehicle List */}
               <div className="max-h-[200px] overflow-y-auto space-y-2">
                 {expired.slice(0, 2).map(v => (
                   <div key={v.id} className="flex items-center justify-between p-2.5 rounded-lg bg-red-500/5 border border-red-500/10">
@@ -156,18 +166,27 @@ export default function ShakenAlertPopup() {
               </div>
             </div>
 
-            {/* Actions */}
-            <div className="p-5 pt-0 flex gap-3">
+            {/* Actions - 3 buttons */}
+            <div className="p-5 pt-0 flex gap-2">
               <Button
                 variant="outline"
-                className="flex-1 transition-all duration-200 hover:scale-[1.01] active:scale-[0.99]"
-                onClick={handleDismiss}
+                size="sm"
+                className="flex-1 gap-1.5 text-xs"
+                onClick={handleClose}
               >
-                Ingatkan Nanti
+                <X className="w-3.5 h-3.5" /> Tutup
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 gap-1.5 text-xs"
+                onClick={handleRemindTomorrow}
+              >
+                <CalendarClock className="w-3.5 h-3.5" /> Ingatkan Besok
               </Button>
               <Link to="/shaken" className="flex-1" onClick={() => setVisible(false)}>
-                <Button className="w-full gap-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 transition-all duration-200 hover:scale-[1.01] active:scale-[0.99]">
-                  Lihat Detail <ArrowRight className="w-4 h-4" />
+                <Button size="sm" className="w-full gap-1.5 text-xs bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600">
+                  Lihat Semua <ArrowRight className="w-3.5 h-3.5" />
                 </Button>
               </Link>
             </div>

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Plus, Search, Filter } from 'lucide-react';
+import { Plus, Search, Filter, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -12,11 +12,13 @@ import { getShakenStatus, formatDaysRemaining } from '@/lib/shaken-utils';
 import ShakenForm from '@/components/shaken/ShakenForm';
 import ShakenDetail from '@/components/shaken/ShakenDetail';
 import ShakenStatusBadge from '@/components/shaken/ShakenStatusBadge';
+import ReminderTemplateEditor from '@/components/shaken/ReminderTemplateEditor';
 
 const STATUS_FILTERS = ['Semua', 'Aktif', 'Akan Habis (30 hari)', 'Akan Habis (60 hari)', 'Akan Habis (90 hari)', 'Expired'];
 
 export default function Shaken() {
   const [showForm, setShowForm] = useState(false);
+  const [showTemplates, setShowTemplates] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('Semua');
@@ -112,9 +114,14 @@ export default function Shaken() {
         title="Shaken (車検)"
         description="Manajemen inspeksi kendaraan, asuransi, dan pajak"
         actions={
-          <Button onClick={() => setShowForm(true)} className="gap-2">
-            <Plus className="w-4 h-4" />Tambah Data Shaken
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setShowTemplates(true)} className="gap-2">
+              <Settings className="w-4 h-4" />Template
+            </Button>
+            <Button onClick={() => setShowForm(true)} className="gap-2">
+              <Plus className="w-4 h-4" />Tambah Data Shaken
+            </Button>
+          </div>
         }
       />
 
@@ -192,6 +199,14 @@ export default function Shaken() {
             queryClient.invalidateQueries({ queryKey: ['shaken'] });
             setSelectedRecord(null);
           }}
+        />
+      )}
+
+      {/* Template Editor Modal */}
+      {showTemplates && (
+        <ReminderTemplateEditor
+          open={showTemplates}
+          onClose={() => setShowTemplates(false)}
         />
       )}
     </div>
