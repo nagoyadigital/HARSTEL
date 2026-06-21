@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Car, Wrench, Package, UserCog,
   Receipt, Calendar, BarChart3, ChevronLeft, ChevronRight,
-  LogOut, Warehouse, Search, ShieldCheck, Database
+  LogOut, Warehouse, Search, ShieldCheck, Database, FileText
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import LogoutConfirmModal from '@/components/shared/LogoutConfirmModal';
@@ -19,6 +19,7 @@ const menuItems = [
   { icon: UserCog, label: 'Mekanik', path: '/mechanics' },
   { icon: ShieldCheck, label: 'Shaken (車検)', path: '/shaken' },
   { icon: Receipt, label: 'Kasir / POS', path: '/pos' },
+  { icon: FileText, label: '請求書 (Invoice)', path: '/invoice' },
   { icon: Calendar, label: 'Booking', path: '/bookings' },
   { icon: BarChart3, label: 'Laporan', path: '/reports' },
   { icon: Database, label: 'Master Data', path: '/master-data' },
