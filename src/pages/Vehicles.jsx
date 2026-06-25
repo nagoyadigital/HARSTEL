@@ -50,31 +50,77 @@ export default function Vehicles() {
   const allBrands = getAllBrands(customBrands);
 
   const createMutation = useMutation({
-    mutationFn: (data) => {
+    mutationFn: async (data) => {
       const cust = customers.find(c => c.id === data.customer_id);
-      return base44.entities.Vehicle.create({
+      const vehicleData = {
         ...data,
         customer_name: cust?.name || '',
         year: data.year ? Number(data.year) : undefined,
         last_odometer: data.last_odometer ? Number(data.last_odometer) : undefined,
         shakeng_status: computeShakeng(data.shakeng_expiry),
-      });
+      };
+      const created = await base44.entities.Vehicle.create(vehicleData);
+      // Auto-sync ke modul Shaken jika ada data shaken
+      if (data.shakeng_date && data.shakeng_expiry) {
+        await base44.entities.Shaken.create({
+          vehicle_id: created.id,
+          vehicle_plate: data.plate_number,
+          vehicle_info: `${data.brand} ${data.model} ${data.year || ''}`.trim(),
+          customer_id: data.customer_id,
+          customer_name: cust?.name || '',
+          shaken_date: data.shakeng_date,
+          shaken_expiry: data.shakeng_expiry,
+          reminder_days: [90, 60, 30, 14, 7, 1],
+        });
+      }
+      return created;
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['vehicles'] }); resetForm(); toast.success('Kendaraan berhasil ditambahkan'); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+      queryClient.invalidateQueries({ queryKey: ['shaken'] });
+      resetForm();
+      toast.success('Kendaraan berhasil ditambahkan');
+    },
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => {
+    mutationFn: async ({ id, data }) => {
       const cust = customers.find(c => c.id === data.customer_id);
-      return base44.entities.Vehicle.update(id, {
+      const vehicleData = {
         ...data,
         customer_name: cust?.name || '',
         year: data.year ? Number(data.year) : undefined,
         last_odometer: data.last_odometer ? Number(data.last_odometer) : undefined,
         shakeng_status: computeShakeng(data.shakeng_expiry),
-      });
+      };
+      await base44.entities.Vehicle.update(id, vehicleData);
+      // Auto-sync ke modul Shaken
+      if (data.shakeng_date && data.shakeng_expiry) {
+        // Cek apakah sudah ada record shaken untuk kendaraan ini
+        const existing = await base44.entities.Shaken.filter({ vehicle_id: id });
+        const shakenData = {
+          vehicle_id: id,
+          vehicle_plate: data.plate_number,
+          vehicle_info: `${data.brand} ${data.model} ${data.year || ''}`.trim(),
+          customer_id: data.customer_id,
+          customer_name: cust?.name || '',
+          shaken_date: data.shakeng_date,
+          shaken_expiry: data.shakeng_expiry,
+        };
+        if (existing.length > 0) {
+          // Update record terbaru
+          await base44.entities.Shaken.update(existing[0].id, shakenData);
+        } else {
+          await base44.entities.Shaken.create({ ...shakenData, reminder_days: [90, 60, 30, 14, 7, 1] });
+        }
+      }
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['vehicles'] }); resetForm(); toast.success('Kendaraan berhasil diperbarui'); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+      queryClient.invalidateQueries({ queryKey: ['shaken'] });
+      resetForm();
+      toast.success('Kendaraan berhasil diperbarui');
+    },
   });
 
   const resetForm = () => { setFormData(emptyForm); setEditId(null); setShowForm(false); };

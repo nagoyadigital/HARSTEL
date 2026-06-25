@@ -26,7 +26,29 @@ export default function Shaken() {
 
   const { data: shakenRecords = [], isLoading } = useQuery({
     queryKey: ['shaken'],
-    queryFn: () => base44.entities.Shaken.list('-shaken_expiry'),
+    queryFn: async () => {
+      // Get dedicated Shaken records
+      const records = await base44.entities.Shaken.list('-shaken_expiry');
+      // Also get vehicles with shaken data that don't have a Shaken record yet
+      const vehicles = await base44.entities.Vehicle.list();
+      const recordVehicleIds = records.map(r => r.vehicle_id);
+      const orphanVehicles = vehicles.filter(v =>
+        v.shakeng_expiry && !recordVehicleIds.includes(v.id)
+      );
+      // Create virtual records from orphan vehicles
+      const virtualRecords = orphanVehicles.map(v => ({
+        id: `v-${v.id}`,
+        vehicle_id: v.id,
+        vehicle_plate: v.plate_number,
+        vehicle_info: `${v.brand} ${v.model} ${v.year || ''}`.trim(),
+        customer_id: v.customer_id,
+        customer_name: v.customer_name,
+        shaken_date: v.shakeng_date,
+        shaken_expiry: v.shakeng_expiry,
+        total_estimated_cost: 0,
+      }));
+      return [...records, ...virtualRecords];
+    },
   });
 
   const filtered = shakenRecords.filter(record => {
