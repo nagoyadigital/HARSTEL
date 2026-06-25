@@ -39,8 +39,14 @@ export default function WorkOrderDetail({ workOrder, open, onClose, onUpdate }) 
     onSuccess: () => { toast.success('Work Order diperbarui'); onUpdate(); },
   });
 
+  // Fetch spareparts for autocomplete
+  const { data: spareparts = [] } = useQuery({
+    queryKey: ['spareparts'],
+    queryFn: () => base44.entities.Sparepart.list(),
+  });
+
   const addItem = (type) => {
-    setItems([...items, { type, name: '', qty: 1, price: 0, total: 0 }]);
+    setItems([...items, { type, name: '', qty: 1, price: 0, total: 0, sparepart_id: '' }]);
   };
 
   const updateItem = (idx, field, value) => {
@@ -48,6 +54,16 @@ export default function WorkOrderDetail({ workOrder, open, onClose, onUpdate }) 
     updated[idx] = { ...updated[idx], [field]: value };
     if (field === 'qty' || field === 'price') {
       updated[idx].total = (updated[idx].qty || 0) * (updated[idx].price || 0);
+    }
+    // When selecting a sparepart from dropdown, auto-fill name and price
+    if (field === 'sparepart_id' && value) {
+      const sp = spareparts.find(s => s.id === value);
+      if (sp) {
+        updated[idx].name = sp.name;
+        updated[idx].price = sp.sell_price || 0;
+        updated[idx].total = (updated[idx].qty || 1) * (sp.sell_price || 0);
+        updated[idx].sparepart_sku = sp.sku;
+      }
     }
     setItems(updated);
   };
@@ -71,6 +87,32 @@ export default function WorkOrderDetail({ workOrder, open, onClose, onUpdate }) 
       parts_cost: partsCost,
       tax,
       total_cost: totalCost,
+    });
+
+    // Deduct sparepart stock for newly added items
+    const sparepartItems = items.filter(i => i.type === 'sparepart' && i.sparepart_id && i.sparepart_id !== '__manual');
+    const oldItems = workOrder.items || [];
+    sparepartItems.forEach(item => {
+      const oldItem = oldItems.find(o => o.sparepart_id === item.sparepart_id);
+      const oldQty = oldItem?.qty || 0;
+      const diff = (item.qty || 0) - oldQty;
+      if (diff > 0) {
+        // New usage — deduct stock
+        const sp = spareparts.find(s => s.id === item.sparepart_id);
+        if (sp) {
+          const newStock = Math.max(0, (sp.stock || 0) - diff);
+          base44.entities.Sparepart.update(sp.id, { stock: newStock });
+          base44.entities.StockMovement.create({
+            sparepart_id: sp.id,
+            sparepart_name: sp.name,
+            type: 'Keluar',
+            quantity: diff,
+            reference: workOrder.wo_number,
+            notes: `Digunakan di WO ${workOrder.wo_number}`,
+            date: format(new Date(), 'yyyy-MM-dd'),
+          });
+        }
+      }
     });
   };
 
@@ -154,7 +196,22 @@ export default function WorkOrderDetail({ workOrder, open, onClose, onUpdate }) 
                   <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${item.type === 'service' ? 'bg-primary/10 text-primary' : 'bg-accent/20 text-accent-foreground'}`}>
                     {item.type === 'service' ? 'Jasa' : 'Part'}
                   </span>
-                  <Input className="flex-1" placeholder="Nama item" value={item.name} onChange={(e) => updateItem(idx, 'name', e.target.value)} />
+                  {item.type === 'sparepart' ? (
+                    <Select value={item.sparepart_id || ''} onValueChange={(v) => updateItem(idx, 'sparepart_id', v)}>
+                      <SelectTrigger className="flex-1 h-9"><SelectValue placeholder="Pilih sparepart..." /></SelectTrigger>
+                      <SelectContent className="max-h-[200px]">
+                        {spareparts.map(sp => (
+                          <SelectItem key={sp.id} value={sp.id}>{sp.sku} — {sp.name} (Stok: {sp.stock || 0})</SelectItem>
+                        ))}
+                        <SelectItem value="__manual">✏️ Ketik manual</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Input className="flex-1" placeholder="Nama jasa" value={item.name} onChange={(e) => updateItem(idx, 'name', e.target.value)} />
+                  )}
+                  {item.type === 'sparepart' && item.sparepart_id === '__manual' && (
+                    <Input className="flex-1" placeholder="Nama part manual" value={item.name} onChange={(e) => updateItem(idx, 'name', e.target.value)} />
+                  )}
                   <Input className="w-16" type="number" placeholder="Qty" value={item.qty} onChange={(e) => updateItem(idx, 'qty', Number(e.target.value))} />
                   <Input className="w-28" type="number" placeholder="Harga" value={item.price} onChange={(e) => updateItem(idx, 'price', Number(e.target.value))} />
                   <span className="w-28 text-sm font-medium text-right">¥ {(item.total || 0).toLocaleString('ja-JP')}</span>

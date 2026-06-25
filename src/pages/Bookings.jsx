@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Calendar } from 'lucide-react';
+import { Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -33,13 +33,47 @@ export default function Bookings() {
     onSuccess: ()=>{queryClient.invalidateQueries({queryKey:['bookings']});toast.success('Status diperbarui');},
   });
 
+  const createWOFromBooking = useMutation({
+    mutationFn: async (booking) => {
+      const woNum = `WO-${Date.now().toString().slice(-8)}`;
+      await base44.entities.WorkOrder.create({
+        wo_number: woNum,
+        customer_name: booking.customer_name,
+        vehicle_info: booking.vehicle_info,
+        complaint: `Booking ${booking.service_type} - ${booking.notes || ''}`.trim(),
+        status: 'Menunggu',
+        items: [],
+      });
+      await base44.entities.Booking.update(booking.id, { status: 'Converted', work_order: woNum });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bookings'] });
+      queryClient.invalidateQueries({ queryKey: ['workOrders'] });
+      toast.success('Work Order berhasil dibuat dari booking');
+    },
+  });
+
   const columns = [
     { header:'Pelanggan', render:(row)=><div><p className="font-medium">{row.customer_name}</p><p className="text-xs text-muted-foreground">{row.vehicle_info}</p></div> },
     { header:'Tanggal', render:(row)=>row.booking_date?format(new Date(row.booking_date),'yyyy/MM/dd'):'-' },
     { header:'Jam', key:'booking_time' },
     { header:'Jenis Service', key:'service_type' },
     { header:'Status', render:(row)=><StatusBadge status={row.status}/> },
-    { header:'Aksi', render:(row)=>row.status==='Pending'?<div className="flex gap-1"><Button size="sm" variant="outline" className="h-7 text-xs" onClick={(e)=>{e.stopPropagation();updateStatus.mutate({id:row.id,status:'Approved'})}}>Approve</Button><Button size="sm" variant="outline" className="h-7 text-xs text-destructive" onClick={(e)=>{e.stopPropagation();updateStatus.mutate({id:row.id,status:'Cancelled'})}}>Tolak</Button></div>:null },
+    { header:'Aksi', render:(row)=>{
+      if (row.status === 'Pending') return (
+        <div className="flex gap-1">
+          <Button size="sm" variant="outline" className="h-7 text-xs" onClick={(e)=>{e.stopPropagation();updateStatus.mutate({id:row.id,status:'Approved'})}}>Approve</Button>
+          <Button size="sm" variant="outline" className="h-7 text-xs text-destructive" onClick={(e)=>{e.stopPropagation();updateStatus.mutate({id:row.id,status:'Cancelled'})}}>Tolak</Button>
+        </div>
+      );
+      if (row.status === 'Approved') return (
+        <Button size="sm" className="h-7 text-xs gap-1" onClick={(e)=>{e.stopPropagation();createWOFromBooking.mutate(row)}}>
+          Buat Work Order
+        </Button>
+      );
+      if (row.status === 'Converted') return <span className="text-xs text-emerald-600 font-medium">{row.work_order || 'WO dibuat'}</span>;
+      return null;
+    }},
   ];
 
   return (
