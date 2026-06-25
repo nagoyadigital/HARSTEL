@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Receipt, Banknote, CheckCircle, Clock, Eye, Search, FileText, Trash2 } from 'lucide-react';
+import { Plus, Receipt, Banknote, CheckCircle, Clock, Eye, Search, FileText, Trash2, Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -31,6 +31,7 @@ export default function POS() {
   const [filter, setFilter] = useState('all');
   const [manualForm, setManualForm] = useState({ type: 'Pemasukan', category: '', description: '', customer_name: '' });
   const [invoiceItems, setInvoiceItems] = useState([{ name: '', qty: 1, price: 0 }]);
+  const [lastSavedInvoice, setLastSavedInvoice] = useState(null);
   const queryClient = useQueryClient();
 
   const { data: allWOs = [] } = useQuery({
@@ -118,10 +119,11 @@ export default function POS() {
         .filter(i => i.name && i.price > 0)
         .map(i => ({ name: i.name, qty: i.qty || 1, price: Number(i.price), subtotal: (i.qty || 1) * Number(i.price) }));
       const total = items.reduce((sum, i) => sum + i.subtotal, 0);
+      const invNumber = generateInvoiceNumber();
 
-      return base44.entities.Transaction.create({
+      const txData = {
         transaction_number: `TX-${Date.now().toString().slice(-8)}`,
-        invoice_number: generateInvoiceNumber(),
+        invoice_number: invNumber,
         type: data.type,
         category: data.category,
         description: data.description,
@@ -130,18 +132,84 @@ export default function POS() {
         payment_method: 'Cash',
         customer_name: data.customer_name,
         date: format(new Date(), 'yyyy-MM-dd'),
-      });
+      };
+
+      // Save for print after success
+      setLastSavedInvoice({ ...txData, items });
+      return base44.entities.Transaction.create(txData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       setShowManualForm(false);
       setManualForm({ type: 'Pemasukan', category: '', description: '', customer_name: '' });
       setInvoiceItems([{ name: '', qty: 1, price: 0 }]);
-      toast.success('Transaksi & invoice berhasil disimpan');
+      toast.success('Transaksi berhasil disimpan! Klik Print untuk mencetak invoice.');
     },
   });
 
   const categories = manualForm.type === 'Pemasukan' ? ['Jasa Service', 'Penjualan Sparepart', 'Lainnya'] : ['Pembelian Sparepart', 'Gaji', 'Operasional', 'Lainnya'];
+
+  const printManualInvoice = (invoice) => {
+    const itemRows = (invoice.items || []).map((item, idx) =>
+      `<tr style="background:${idx % 2 === 0 ? '#fff' : '#fafafa'}">
+        <td style="padding:7px 6px;border-bottom:1px solid #eee;font-size:10px">${idx + 1}</td>
+        <td style="padding:7px 6px;border-bottom:1px solid #eee;font-size:10px;font-weight:500">${item.name}</td>
+        <td style="padding:7px 6px;border-bottom:1px solid #eee;font-size:10px;text-align:right">${item.qty}</td>
+        <td style="padding:7px 6px;border-bottom:1px solid #eee;font-size:10px;text-align:right">¥ ${item.price.toLocaleString('ja-JP')}</td>
+        <td style="padding:7px 6px;border-bottom:1px solid #eee;font-size:10px;text-align:right;font-weight:600">¥ ${item.subtotal.toLocaleString('ja-JP')}</td>
+      </tr>`
+    ).join('');
+
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`<!DOCTYPE html><html><head><title>Invoice ${invoice.invoice_number}</title>
+      <style>
+        @page { size: A4 portrait; margin: 15mm; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Yu Gothic', 'Meiryo', 'Hiragino Sans', sans-serif; font-size: 10px; color: #1a1a1a; line-height: 1.5; padding: 20mm; }
+        .header { display: flex; justify-content: space-between; margin-bottom: 25px; }
+        .company { font-size: 9px; color: #555; }
+        .company-name { font-size: 16px; font-weight: 700; color: #c41e3a; margin-bottom: 4px; }
+        .title { text-align: center; margin: 20px 0 30px; }
+        .title h1 { font-size: 22px; font-weight: 700; letter-spacing: 8px; }
+        .title p { font-size: 11px; color: #666; margin-top: 2px; }
+        .info { margin-bottom: 20px; font-size: 10px; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #1a1a1a; color: white; padding: 8px 6px; font-size: 9px; text-align: left; font-weight: 600; }
+        .total { margin-top: 15px; text-align: right; font-size: 16px; font-weight: 700; color: #c41e3a; border-top: 2px solid #1a1a1a; padding-top: 12px; }
+        .footer { margin-top: 40px; text-align: center; font-size: 8px; color: #999; border-top: 1px solid #eee; padding-top: 10px; }
+      </style></head><body>
+      <div class="header">
+        <div>
+          <div class="company-name">HARSTEL WORKSHOP</div>
+          <div class="company">〒447-0082<br>2 Chome-83 Koseimachi, Hekinan, Aichi, Japan<br>TEL: 090-6357-9803 / FAX: 0566-57-6225</div>
+        </div>
+        <div style="text-align:right;font-size:9px;color:#555">
+          <p><strong>Invoice No:</strong> ${invoice.invoice_number}</p>
+          <p><strong>Tanggal:</strong> ${invoice.date}</p>
+          <p><strong>Pembayaran:</strong> Cash</p>
+        </div>
+      </div>
+      <div class="title"><h1>請求書</h1><p>INVOICE</p></div>
+      <div class="info">
+        <p><strong>Pelanggan:</strong> ${invoice.customer_name || '-'}</p>
+        ${invoice.description ? `<p><strong>Keterangan:</strong> ${invoice.description}</p>` : ''}
+      </div>
+      <table>
+        <thead><tr>
+          <th>No</th><th>Nama Barang/Jasa</th><th style="text-align:right">Qty</th><th style="text-align:right">Harga</th><th style="text-align:right">Subtotal</th>
+        </tr></thead>
+        <tbody>${itemRows}</tbody>
+      </table>
+      <div class="total">ご請求金額: ¥ ${(invoice.amount || 0).toLocaleString('ja-JP')}</div>
+      <div class="footer">
+        <p>HARSTEL WORKSHOP | 〒447-0082 2 Chome-83 Koseimachi, Hekinan, Aichi, Japan</p>
+        <p>TEL: 090-6357-9803 | FAX: 0566-57-6225</p>
+      </div>
+      </body></html>`);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => { printWindow.print(); }, 300);
+  };
 
   return (
     <div className="space-y-6">
@@ -258,6 +326,11 @@ export default function POS() {
               { header: 'Invoice', render: (row) => row.invoice_number ? <span className="font-mono text-xs text-primary">{row.invoice_number}</span> : '-' },
               { header: 'Pelanggan', key: 'customer_name' },
               { header: 'Jumlah', render: (row) => <span className={`font-semibold ${row.type === 'Pemasukan' ? 'text-emerald-600' : 'text-red-500'}`}>{row.type === 'Pemasukan' ? '+' : '-'}¥ {(row.amount || 0).toLocaleString('ja-JP')}</span> },
+              { header: '', render: (row) => row.invoice_items ? (
+                <Button size="sm" variant="ghost" className="gap-1 text-xs h-7" onClick={(e) => { e.stopPropagation(); printManualInvoice({ ...row, items: row.invoice_items }); }}>
+                  <Printer className="w-3 h-3" /> Print
+                </Button>
+              ) : null },
             ]}
             data={transactions}
             isLoading={txLoading}
@@ -410,7 +483,7 @@ export default function POS() {
               disabled={!manualForm.category || invoiceTotal <= 0 || createManualTx.isPending}
               className="gap-2"
             >
-              <CheckCircle className="w-4 h-4" /> Simpan Transaksi
+              <CheckCircle className="w-4 h-4" /> Simpan & Print
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -418,6 +491,30 @@ export default function POS() {
 
       {/* Invoice Preview */}
       {previewWO && <InvoicePreview workOrder={previewWO} open={!!previewWO} onClose={() => setPreviewWO(null)} />}
+
+      {/* Print Saved Manual Invoice */}
+      {lastSavedInvoice && (
+        <Dialog open={!!lastSavedInvoice} onOpenChange={(o) => { if (!o) setLastSavedInvoice(null); }}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader><DialogTitle>Transaksi Berhasil</DialogTitle></DialogHeader>
+            <div className="text-center py-4">
+              <div className="w-14 h-14 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-3">
+                <CheckCircle className="w-7 h-7 text-emerald-500" />
+              </div>
+              <p className="text-sm font-medium">Invoice berhasil dibuat</p>
+              <p className="text-xs text-muted-foreground mt-1 font-mono">{lastSavedInvoice.invoice_number}</p>
+              <p className="text-2xl font-bold text-primary mt-3">¥ {(lastSavedInvoice.amount || 0).toLocaleString('ja-JP')}</p>
+              <p className="text-xs text-muted-foreground mt-1">{lastSavedInvoice.customer_name || '-'}</p>
+            </div>
+            <DialogFooter className="flex gap-2 sm:justify-center">
+              <Button variant="outline" onClick={() => setLastSavedInvoice(null)}>Tutup</Button>
+              <Button className="gap-2" onClick={() => printManualInvoice(lastSavedInvoice)}>
+                <Printer className="w-4 h-4" /> Print Invoice
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* Invoice Settings */}
       {showSettings && <InvoiceSettings open={showSettings} onClose={() => setShowSettings(false)} />}
