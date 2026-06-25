@@ -221,7 +221,17 @@ main {
   }
 }
 
-/* Fix: native date picker inside dialogs */
+/* Fix: hide native date picker calendar popup - use text input only */
 input[type="date"]::-webkit-calendar-picker-indicator {
-  cursor: pointer;
+  display: none !important;
+  -webkit-appearance: none;
+}
+
+input[type="date"]::-webkit-date-and-time-value {
+  text-align: left;
+}
+
+input[type="date"] {
+  -webkit-appearance: none;
+  appearance: none;
 }
