@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Receipt, Banknote, CheckCircle, Clock, Eye, Search, FileText } from 'lucide-react';
+import { Plus, Receipt, Banknote, CheckCircle, Clock, Eye, Search, FileText, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -29,7 +29,8 @@ export default function POS() {
   const [showSettings, setShowSettings] = useState(false);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
-  const [manualForm, setManualForm] = useState({ type: 'Pemasukan', category: '', description: '', amount: '', customer_name: '' });
+  const [manualForm, setManualForm] = useState({ type: 'Pemasukan', category: '', description: '', customer_name: '' });
+  const [invoiceItems, setInvoiceItems] = useState([{ name: '', qty: 1, price: 0 }]);
   const queryClient = useQueryClient();
 
   const { data: allWOs = [] } = useQuery({
@@ -101,22 +102,42 @@ export default function POS() {
     },
   });
 
+  const invoiceTotal = invoiceItems.reduce((sum, item) => sum + ((item.qty || 0) * (item.price || 0)), 0);
+
+  const addInvoiceItem = () => setInvoiceItems([...invoiceItems, { name: '', qty: 1, price: 0 }]);
+  const removeInvoiceItem = (idx) => setInvoiceItems(invoiceItems.filter((_, i) => i !== idx));
+  const updateInvoiceItem = (idx, field, value) => {
+    const updated = [...invoiceItems];
+    updated[idx] = { ...updated[idx], [field]: value };
+    setInvoiceItems(updated);
+  };
+
   const createManualTx = useMutation({
-    mutationFn: (data) => base44.entities.Transaction.create({
-      transaction_number: `TX-${Date.now().toString().slice(-8)}`,
-      type: data.type,
-      category: data.category,
-      description: data.description,
-      amount: Number(data.amount),
-      payment_method: 'Cash',
-      customer_name: data.customer_name,
-      date: format(new Date(), 'yyyy-MM-dd'),
-    }),
+    mutationFn: (data) => {
+      const items = invoiceItems
+        .filter(i => i.name && i.price > 0)
+        .map(i => ({ name: i.name, qty: i.qty || 1, price: Number(i.price), subtotal: (i.qty || 1) * Number(i.price) }));
+      const total = items.reduce((sum, i) => sum + i.subtotal, 0);
+
+      return base44.entities.Transaction.create({
+        transaction_number: `TX-${Date.now().toString().slice(-8)}`,
+        invoice_number: generateInvoiceNumber(),
+        type: data.type,
+        category: data.category,
+        description: data.description,
+        amount: total,
+        invoice_items: items,
+        payment_method: 'Cash',
+        customer_name: data.customer_name,
+        date: format(new Date(), 'yyyy-MM-dd'),
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       setShowManualForm(false);
-      setManualForm({ type: 'Pemasukan', category: '', description: '', amount: '', customer_name: '' });
-      toast.success('Transaksi dicatat');
+      setManualForm({ type: 'Pemasukan', category: '', description: '', customer_name: '' });
+      setInvoiceItems([{ name: '', qty: 1, price: 0 }]);
+      toast.success('Transaksi & invoice berhasil disimpan');
     },
   });
 
@@ -272,20 +293,125 @@ export default function POS() {
         </DialogContent>
       </Dialog>
 
-      {/* Manual Transaction Dialog */}
+      {/* Manual Transaction Dialog with Detail Invoice */}
       <Dialog open={showManualForm} onOpenChange={(o) => { if (!o) setShowManualForm(false); }}>
-        <DialogContent className="max-w-md">
-          <DialogHeader><DialogTitle>Transaksi Manual</DialogTitle></DialogHeader>
-          <div className="space-y-4">
-            <div><Label>Tipe</Label><Select value={manualForm.type} onValueChange={(v) => setManualForm({ ...manualForm, type: v, category: '' })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Pemasukan">Pemasukan</SelectItem><SelectItem value="Pengeluaran">Pengeluaran</SelectItem></SelectContent></Select></div>
-            <div><Label>Kategori *</Label><Select value={manualForm.category} onValueChange={(v) => setManualForm({ ...manualForm, category: v })}><SelectTrigger><SelectValue placeholder="Pilih" /></SelectTrigger><SelectContent>{categories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select></div>
-            <div><Label>Keterangan</Label><Textarea value={manualForm.description} onChange={(e) => setManualForm({ ...manualForm, description: e.target.value })} /></div>
-            <div><Label>Jumlah *</Label><Input type="number" value={manualForm.amount} onChange={(e) => setManualForm({ ...manualForm, amount: e.target.value })} placeholder="¥" /></div>
-            <div><Label>Nama Pelanggan</Label><Input value={manualForm.customer_name} onChange={(e) => setManualForm({ ...manualForm, customer_name: e.target.value })} /></div>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>Transaksi Manual — Detail Invoice</DialogTitle></DialogHeader>
+          <div className="space-y-5">
+            {/* Basic Info */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Tipe</Label>
+                <Select value={manualForm.type} onValueChange={(v) => setManualForm({ ...manualForm, type: v, category: '' })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Pemasukan">Pemasukan</SelectItem>
+                    <SelectItem value="Pengeluaran">Pengeluaran</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Kategori *</Label>
+                <Select value={manualForm.category} onValueChange={(v) => setManualForm({ ...manualForm, category: v })}>
+                  <SelectTrigger><SelectValue placeholder="Pilih" /></SelectTrigger>
+                  <SelectContent>{categories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div className="col-span-2">
+                <Label>Nama Pelanggan</Label>
+                <Input value={manualForm.customer_name} onChange={(e) => setManualForm({ ...manualForm, customer_name: e.target.value })} placeholder="Nama pelanggan atau perusahaan" />
+              </div>
+            </div>
+
+            {/* Detail Invoice Items */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <Label className="text-sm font-semibold">Detail Invoice</Label>
+                <Button type="button" variant="outline" size="sm" className="gap-1.5 text-xs" onClick={addInvoiceItem}>
+                  <Plus className="w-3.5 h-3.5" /> Tambah Item
+                </Button>
+              </div>
+
+              {/* Table Header */}
+              <div className="grid grid-cols-[1fr_70px_110px_110px_36px] gap-2 mb-2 px-1">
+                <span className="text-xs text-muted-foreground font-medium">Nama Barang/Jasa</span>
+                <span className="text-xs text-muted-foreground font-medium text-center">Qty</span>
+                <span className="text-xs text-muted-foreground font-medium text-right">Harga Satuan</span>
+                <span className="text-xs text-muted-foreground font-medium text-right">Subtotal</span>
+                <span></span>
+              </div>
+
+              {/* Items */}
+              <div className="space-y-2">
+                {invoiceItems.map((item, idx) => {
+                  const subtotal = (item.qty || 0) * (item.price || 0);
+                  return (
+                    <div key={idx} className="grid grid-cols-[1fr_70px_110px_110px_36px] gap-2 items-center">
+                      <Input
+                        placeholder="Nama item..."
+                        value={item.name}
+                        onChange={(e) => updateInvoiceItem(idx, 'name', e.target.value)}
+                        className="h-9 text-sm"
+                      />
+                      <Input
+                        type="number"
+                        placeholder="1"
+                        value={item.qty}
+                        onChange={(e) => updateInvoiceItem(idx, 'qty', Number(e.target.value))}
+                        className="h-9 text-sm text-center"
+                      />
+                      <Input
+                        type="number"
+                        placeholder="0"
+                        value={item.price}
+                        onChange={(e) => updateInvoiceItem(idx, 'price', Number(e.target.value))}
+                        className="h-9 text-sm text-right"
+                      />
+                      <span className="text-sm font-medium text-right pr-1">¥ {subtotal.toLocaleString('ja-JP')}</span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => removeInvoiceItem(idx)}
+                        disabled={invoiceItems.length <= 1}
+                      >
+                        <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Total */}
+              <div className="flex justify-end mt-4 pt-3 border-t border-border">
+                <div className="text-right">
+                  <span className="text-sm text-muted-foreground mr-4">Total:</span>
+                  <span className="text-xl font-bold text-primary">¥ {invoiceTotal.toLocaleString('ja-JP')}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Notes */}
+            <div>
+              <Label>Keterangan / Catatan</Label>
+              <Textarea
+                value={manualForm.description}
+                onChange={(e) => setManualForm({ ...manualForm, description: e.target.value })}
+                placeholder="Catatan umum invoice..."
+                rows={2}
+              />
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowManualForm(false)}>Batal</Button>
-            <Button onClick={() => createManualTx.mutate(manualForm)} disabled={!manualForm.category || !manualForm.amount || createManualTx.isPending}>Simpan</Button>
+            <Button
+              onClick={() => createManualTx.mutate(manualForm)}
+              disabled={!manualForm.category || invoiceTotal <= 0 || createManualTx.isPending}
+              className="gap-2"
+            >
+              <CheckCircle className="w-4 h-4" /> Simpan Transaksi
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
