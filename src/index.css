@@ -220,3 +220,8 @@ main {
     display: none !important;
   }
 }
+
+/* Fix: native date picker inside dialogs */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+}
