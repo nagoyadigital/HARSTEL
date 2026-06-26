@@ -15,7 +15,8 @@
     "preview": "vite preview",
     "electron:dev": "vite build && electron .",
     "electron:build": "vite build && electron-builder --mac",
-    "dist:mac": "vite build && electron-builder --mac dmg"
+    "dist:mac": "vite build && electron-builder --mac dmg",
+    "dist:win": "vite build && electron-builder --win"
   },
   "build": {
     "appId": "com.harstel.workshop",
@@ -28,6 +29,23 @@
       "electron/**/*",
       "!node_modules/**/*"
     ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon2.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
     "mac": {
       "category": "public.app-category.business",
       "target": "dmg",
@@ -36,8 +54,16 @@
     "dmg": {
       "title": "HARSTEL Workshop",
       "contents": [
-        { "x": 130, "y": 220 },
-        { "x": 410, "y": 220, "type": "link", "path": "/Applications" }
+        {
+          "x": 130,
+          "y": 220
+        },
+        {
+          "x": 410,
+          "y": 220,
+          "type": "link",
+          "path": "/Applications"
+        }
       ]
     }
   },
@@ -71,8 +97,6 @@
     "@radix-ui/react-toggle": "^1.1.2",
     "@radix-ui/react-toggle-group": "^1.1.2",
     "@radix-ui/react-tooltip": "^1.1.8",
-    "@stripe/react-stripe-js": "^3.0.0",
-    "@stripe/stripe-js": "^5.2.0",
     "@tanstack/react-query": "^5.84.1",
     "canvas-confetti": "^1.9.4",
     "class-variance-authority": "^0.7.1",
@@ -122,6 +146,7 @@
     "eslint-plugin-react-refresh": "^0.4.18",
     "eslint-plugin-unused-imports": "^4.3.0",
     "globals": "^15.14.0",
+    "png-to-ico": "^3.0.1",
     "postcss": "^8.5.3",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.8.2",

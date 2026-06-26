@@ -172,7 +172,7 @@ export const localAuth = {
     return this.loginViaUsernamePassword(email, password, false)
   },
 
-  async loginWithProvider(provider, redirectUrl) {
+  async loginWithProvider(provider, returnUrl) {
     const users = getUsers()
     const admin = users[0]
     if (admin) {
@@ -186,7 +186,7 @@ export const localAuth = {
       })
       logActivity('login_provider', { provider, userId: admin.id })
     }
-    window.location.href = redirectUrl || '/'
+    window.location.hash = returnUrl || '/'
   },
 
   async register({ email, password, name, username }) {
@@ -280,6 +280,6 @@ export const localAuth = {
   },
 
   redirectToLogin(returnUrl) {
-    window.location.href = '/login' + (returnUrl ? `?returnUrl=${encodeURIComponent(returnUrl)}` : '')
+    window.location.hash = '/login' + (returnUrl ? `?returnUrl=${encodeURIComponent(returnUrl)}` : '')
   },
 }
