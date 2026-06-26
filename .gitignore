@@ -34,3 +34,4 @@ dist-ssr
 release/
 *.exe
 *.blockmap
+release/
