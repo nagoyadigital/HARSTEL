@@ -1,15 +1,45 @@
 {
-  "name": "auto-garage",
+  "name": "harstel-workshop",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
+  "main": "electron/main.js",
+  "author": "HARSTEL Workshop",
+  "description": "HARSTEL Workshop Management System",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint . --quiet",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc -p ./jsconfig.json",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "electron:dev": "vite build && electron .",
+    "electron:build": "vite build && electron-builder --mac",
+    "dist:mac": "vite build && electron-builder --mac dmg"
+  },
+  "build": {
+    "appId": "com.harstel.workshop",
+    "productName": "HARSTEL Workshop",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "!node_modules/**/*"
+    ],
+    "mac": {
+      "category": "public.app-category.business",
+      "target": "dmg",
+      "icon": "build/icon.icns"
+    },
+    "dmg": {
+      "title": "HARSTEL Workshop",
+      "contents": [
+        { "x": 130, "y": 220 },
+        { "x": 410, "y": 220, "type": "link", "path": "/Applications" }
+      ]
+    }
   },
   "dependencies": {
     "@hello-pangea/dnd": "^17.0.0",
@@ -84,6 +114,8 @@
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
     "baseline-browser-mapping": "^2.8.32",
+    "electron": "^32.2.7",
+    "electron-builder": "^26.15.3",
     "eslint": "^9.19.0",
     "eslint-plugin-react": "^7.37.4",
     "eslint-plugin-react-hooks": "^5.0.0",
