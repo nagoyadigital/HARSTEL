@@ -10,7 +10,6 @@ function createWindow() {
     minWidth: 1024,
     minHeight: 700,
     title: 'HARSTEL Workshop',
-    icon: path.join(__dirname, '../public/icon.png'),
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -19,8 +18,9 @@ function createWindow() {
     backgroundColor: '#080808',
   });
 
-  // Load the built app
-  mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
+  // In packaged app, app.getAppPath() points to the asar root
+  const appPath = app.getAppPath();
+  mainWindow.loadFile(path.join(appPath, 'dist', 'index.html'));
 
   // Show when ready
   mainWindow.once('ready-to-show', () => {
