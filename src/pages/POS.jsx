@@ -31,6 +31,7 @@ export default function POS() {
   const [filter, setFilter] = useState('all');
   const [manualForm, setManualForm] = useState({ type: 'Pemasukan', category: '', description: '', customer_name: '' });
   const [invoiceItems, setInvoiceItems] = useState([{ name: '', qty: 1, price: 0 }]);
+  const [shakenPayment, setShakenPayment] = useState({ weight_tax: '', jibaiseki: '', stamp_fee: '', service_fee: '', maintenance: '', other: '' });
   const [lastSavedInvoice, setLastSavedInvoice] = useState(null);
   const queryClient = useQueryClient();
 
@@ -103,7 +104,9 @@ export default function POS() {
     },
   });
 
-  const invoiceTotal = invoiceItems.reduce((sum, item) => sum + Math.round((item.qty || 0) * (item.price || 0) * 1.1), 0);
+  const itemSubtotal = invoiceItems.reduce((sum, item) => sum + Math.round((item.qty || 0) * (item.price || 0) * 1.1), 0);
+  const shakenSubtotal = Object.values(shakenPayment).reduce((sum, v) => sum + (Number(v) || 0), 0);
+  const grandTotal = itemSubtotal + shakenSubtotal;
 
   const addInvoiceItem = () => setInvoiceItems([...invoiceItems, { name: '', qty: 1, price: 0 }]);
   const removeInvoiceItem = (idx) => setInvoiceItems(invoiceItems.filter((_, i) => i !== idx));
@@ -127,15 +130,17 @@ export default function POS() {
         type: data.type,
         category: data.category,
         description: data.description,
-        amount: total,
+        amount: total + shakenSubtotal,
         invoice_items: items,
+        shaken_payment: shakenPayment,
+        shaken_subtotal: shakenSubtotal,
         payment_method: 'Cash',
         customer_name: data.customer_name,
         date: format(new Date(), 'yyyy-MM-dd'),
       };
 
       // Save for print after success
-      setLastSavedInvoice({ ...txData, items });
+      setLastSavedInvoice({ ...txData, items, shaken_payment: shakenPayment, shaken_subtotal: shakenSubtotal });
       return base44.entities.Transaction.create(txData);
     },
     onSuccess: () => {
@@ -143,6 +148,7 @@ export default function POS() {
       setShowManualForm(false);
       setManualForm({ type: 'Pemasukan', category: '', description: '', customer_name: '' });
       setInvoiceItems([{ name: '', qty: 1, price: 0 }]);
+      setShakenPayment({ weight_tax: '', jibaiseki: '', stamp_fee: '', service_fee: '', maintenance: '', other: '' });
       toast.success('Transaksi berhasil disimpan! Klik Print untuk mencetak invoice.');
     },
   });
@@ -152,117 +158,134 @@ export default function POS() {
   const printManualInvoice = (invoice) => {
     const invoiceDate = new Date(invoice.date || new Date());
     const year = invoiceDate.getFullYear();
-    const month = String(invoiceDate.getMonth() + 1).padStart(2, '0');
-    const day = String(invoiceDate.getDate()).padStart(2, '0');
+    const month = invoiceDate.getMonth() + 1;
+    const day = invoiceDate.getDate();
 
-    const itemRows = (invoice.items || []).map((item) =>
-      `<tr>
-        <td class="cell">${month}</td>
-        <td class="cell">${day}</td>
-        <td class="cell left">${item.name}</td>
-        <td class="cell right">¥ ${item.subtotal.toLocaleString('ja-JP')}</td>
-      </tr>`
+    const items = invoice.items || [];
+    const shaken = invoice.shaken_payment || {};
+    const shakenSub = invoice.shaken_subtotal || 0;
+    const itemTotal = items.reduce((s, i) => s + (i.subtotal || 0), 0);
+    const total = itemTotal + shakenSub;
+
+    // Item rows (pad to 15 rows)
+    const itemRows = items.map(item =>
+      `<tr><td class="c">${month}</td><td class="c">${day}</td><td class="c l">${item.name}</td><td class="c r">¥ ${item.subtotal.toLocaleString('ja-JP')}</td></tr>`
+    ).join('');
+    const emptyItemRows = Array(Math.max(0, 15 - items.length)).fill(
+      `<tr><td class="c">&nbsp;</td><td class="c"></td><td class="c l"></td><td class="c r"></td></tr>`
     ).join('');
 
-    // Fill empty rows to make table look complete (min 10 rows)
-    const emptyRows = Math.max(0, 10 - (invoice.items || []).length);
-    const emptyRowsHtml = Array(emptyRows).fill(
-      `<tr><td class="cell">&nbsp;</td><td class="cell"></td><td class="cell left"></td><td class="cell right"></td></tr>`
+    // Shaken rows
+    const shakenItems = [
+      { name: '重量税', amount: Number(shaken.weight_tax) || 0 },
+      { name: '自賠責保険', amount: Number(shaken.jibaiseki) || 0 },
+      { name: '印紙代', amount: Number(shaken.stamp_fee) || 0 },
+      { name: '代行手数料', amount: Number(shaken.service_fee) || 0 },
+      { name: '整備費用', amount: Number(shaken.maintenance) || 0 },
+      { name: 'その他', amount: Number(shaken.other) || 0 },
+    ].filter(i => i.amount > 0);
+    const shakenRows = shakenItems.map(item =>
+      `<tr><td class="c">${month}</td><td class="c">${day}</td><td class="c l">${item.name}</td><td class="c r">¥ ${item.amount.toLocaleString('ja-JP')}</td></tr>`
     ).join('');
-
-    const totalAmount = invoice.amount || 0;
+    const emptyShakenRows = Array(Math.max(0, 6 - shakenItems.length)).fill(
+      `<tr><td class="c">&nbsp;</td><td class="c"></td><td class="c l"></td><td class="c r"></td></tr>`
+    ).join('');
 
     const printWindow = window.open('', '_blank');
-    printWindow.document.write(`<!DOCTYPE html><html><head><title>請求書 ${invoice.invoice_number}</title>
-      <style>
-        @page { size: A4 portrait; margin: 12mm; }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Yu Gothic', 'Meiryo', 'Hiragino Sans', 'MS Gothic', sans-serif; font-size: 11px; color: #000; line-height: 1.6; padding: 10mm; }
-        .invoice-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
-        .invoice-label { font-size: 10px; color: #666; letter-spacing: 2px; }
-        .date-area { text-align: right; font-size: 12px; }
-        .date-area span { margin: 0 2px; }
-        .title { text-align: center; margin: 20px 0; }
-        .title h1 { font-size: 28px; font-weight: 700; letter-spacing: 12px; border-bottom: 3px solid #000; display: inline-block; padding-bottom: 4px; }
-        .customer-company { display: flex; justify-content: space-between; margin: 25px 0; }
-        .customer { flex: 1; }
-        .customer-name { font-size: 18px; font-weight: 700; border-bottom: 2px solid #000; padding-bottom: 4px; display: inline-block; }
-        .customer-sama { font-size: 14px; margin-left: 8px; }
-        .company-info { text-align: right; font-size: 11px; line-height: 1.8; }
-        .company-info .name { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
-        .total-box { border: 3px solid #000; padding: 12px 20px; margin: 20px 0; display: flex; justify-content: space-between; align-items: center; }
-        .total-label { font-size: 14px; font-weight: 700; }
-        .total-value { font-size: 22px; font-weight: 700; }
-        .items-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-        .items-table th { background: #000; color: #fff; padding: 8px 10px; font-size: 11px; font-weight: 600; text-align: center; border: 1px solid #000; }
-        .items-table .cell { border: 1px solid #000; padding: 6px 10px; font-size: 11px; text-align: center; min-height: 24px; }
-        .items-table .cell.left { text-align: left; }
-        .items-table .cell.right { text-align: right; }
-        .summary-row { border: 1px solid #000; }
-        .summary-row td { padding: 8px 10px; font-size: 12px; font-weight: 700; border: 1px solid #000; }
-        .bank-info { margin-top: 30px; font-size: 11px; line-height: 1.8; }
-        .bank-info .label { font-weight: 700; margin-bottom: 4px; }
-      </style></head><body>
+    printWindow.document.write(`<!DOCTYPE html><html><head><title>請求書</title>
+<style>
+@page { size: A4 portrait; margin: 10mm; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Yu Gothic', 'Meiryo', 'MS Gothic', sans-serif; font-size: 11px; color: #000; line-height: 1.4; }
+table { border-collapse: collapse; width: 100%; }
+.c { border: 1px solid #000; padding: 4px 6px; text-align: center; height: 22px; }
+.c.l { text-align: left; }
+.c.r { text-align: right; }
+.header-table td { border: 1px solid #000; padding: 4px 8px; }
+.bold { font-weight: 700; }
+.big { font-size: 22px; font-weight: 700; }
+.mid { font-size: 14px; font-weight: 700; }
+.total-row td { border: 2px solid #000; padding: 6px 8px; font-weight: 700; font-size: 12px; }
+</style></head><body>
 
-      <!-- Header -->
-      <div class="invoice-header">
-        <div class="invoice-label">INVOICE</div>
-        <div class="date-area">
-          年 <span>${year}</span> 月 <span>${month}</span> 日 <span>${day}</span>
-        </div>
-      </div>
+<!-- HEADER ROW -->
+<table class="header-table" style="margin-bottom:0">
+<tr>
+  <td style="width:40%;font-size:12px;font-weight:700;letter-spacing:3px;text-decoration:underline">INVOICE</td>
+  <td class="c" style="width:8%">年</td>
+  <td class="c bold" style="width:12%">${year}</td>
+  <td class="c" style="width:8%">月</td>
+  <td class="c bold" style="width:8%">${month}</td>
+  <td class="c" style="width:8%">日</td>
+  <td class="c bold" style="width:8%">${day}</td>
+</tr>
+</table>
 
-      <!-- Title -->
-      <div class="title">
-        <h1>請求書</h1>
-      </div>
+<!-- 請求書 TITLE -->
+<table class="header-table" style="margin-bottom:0">
+<tr><td colspan="7" style="text-align:center;font-size:20px;font-weight:700;letter-spacing:8px;padding:8px">請 求 書</td></tr>
+</table>
 
-      <!-- Customer & Company -->
-      <div class="customer-company">
-        <div class="customer">
-          <span class="customer-name">${invoice.customer_name || '　　　　　　'}</span>
-          <span class="customer-sama">様</span>
-        </div>
-        <div class="company-info">
-          <div class="name">HARSTEL</div>
-          登録番号：T3810590640185<br>
-          愛知県碧南市湖西町２－８３<br>
-          0566-57-6225<br><br>
-          <span style="font-weight:700">振込先</span><br>
-          ゆうちょ銀行<br>
-          店番 208<br>
-          普通口座：12060-11454171<br>
-          口座名義：ハリープラセティヤ
-        </div>
-      </div>
+<!-- CUSTOMER + COMPANY INFO -->
+<table class="header-table" style="margin-bottom:0">
+<tr>
+  <td rowspan="5" style="width:30%;vertical-align:top;padding:8px">
+    <div style="font-size:14px;font-weight:700;border-bottom:2px solid #000;padding-bottom:4px;margin-bottom:8px">${invoice.customer_name || '　　　　　　'}　<span style="font-size:16px">様</span></div>
+  </td>
+  <td rowspan="2" style="width:15%;text-align:center;vertical-align:middle;font-size:16px;font-weight:700">様</td>
+  <td colspan="3" style="font-size:16px;font-weight:700;padding:4px 8px">HARSTEL</td>
+</tr>
+<tr>
+  <td colspan="3" style="padding:2px 8px;font-size:10px">登録番号：T3810590640185</td>
+</tr>
+<tr>
+  <td rowspan="3" style="vertical-align:top;padding:8px;font-size:10px">
+    <div style="margin-bottom:4px">下記のとおり御請求申し上げます</div>
+    <div style="font-size:13px;font-weight:700;margin:6px 0">税込合計金額</div>
+    <div style="font-size:22px;font-weight:700">¥ ${total.toLocaleString('ja-JP')}</div>
+  </td>
+  <td colspan="3" style="padding:2px 8px;font-size:10px">愛知県碧南市湖西町２−８３</td>
+</tr>
+<tr>
+  <td style="padding:2px 8px;font-size:11px;font-weight:700" colspan="3">0566-57-6225</td>
+</tr>
+<tr>
+  <td style="padding:2px 8px;font-size:10px;vertical-align:top" colspan="3">
+    <div style="margin-bottom:2px"><span class="bold">振込先</span></div>
+    <table style="width:100%;border-collapse:collapse;font-size:10px">
+      <tr><td style="border:1px solid #000;padding:2px 4px">ゆうちょ銀行</td><td style="border:1px solid #000;padding:2px 4px;width:40px">店番</td><td style="border:1px solid #000;padding:2px 4px;width:40px">208</td></tr>
+    </table>
+    <div style="margin-top:2px">普通口座：12060-11454171</div>
+    <div>口座名義：ハリープラセティヤ</div>
+  </td>
+</tr>
+</table>
 
-      <!-- Total Box -->
-      <div class="total-box">
-        <div class="total-label">税込合計金額</div>
-        <div class="total-value">¥ ${totalAmount.toLocaleString('ja-JP')}</div>
-      </div>
+<!-- ITEMS TABLE -->
+<table style="margin-top:8px">
+<thead>
+  <tr><th class="c" style="width:40px;background:#000;color:#fff">月</th><th class="c" style="width:40px;background:#000;color:#fff">日</th><th class="c" style="background:#000;color:#fff">品名</th><th class="c" style="width:120px;background:#000;color:#fff">金額</th></tr>
+</thead>
+<tbody>
+  ${itemRows}
+  ${emptyItemRows}
+  <tr class="total-row"><td colspan="3" style="text-align:center;border:2px solid #000">total</td><td style="text-align:right;border:2px solid #000">¥ ${itemTotal.toLocaleString('ja-JP')}</td></tr>
+  <tr class="total-row"><td colspan="3" style="text-align:center;border:2px solid #000"></td><td style="text-align:right;border:2px solid #000">¥ ${itemTotal.toLocaleString('ja-JP')}</td></tr>
+</tbody>
+</table>
 
-      <!-- Items Table -->
-      <table class="items-table">
-        <thead>
-          <tr>
-            <th style="width:50px">月</th>
-            <th style="width:50px">日</th>
-            <th>品名</th>
-            <th style="width:120px">金額</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${itemRows}
-          ${emptyRowsHtml}
-          <tr class="summary-row">
-            <td colspan="3" style="text-align:right">合計</td>
-            <td style="text-align:right">¥ ${totalAmount.toLocaleString('ja-JP')}</td>
-          </tr>
-        </tbody>
-      </table>
+<!-- SHAKEN TABLE (if any shaken items) -->
+${shakenSub > 0 ? `
+<table style="margin-top:4px">
+<tbody>
+  ${shakenRows}
+  ${emptyShakenRows}
+  <tr class="total-row"><td colspan="3" style="text-align:center;border:2px solid #000">合　計</td><td style="text-align:right;border:2px solid #000">¥ ${total.toLocaleString('ja-JP')}</td></tr>
+</tbody>
+</table>
+` : ''}
 
-      </body></html>`);
+</body></html>`);
     printWindow.document.close();
     printWindow.focus();
     setTimeout(() => { printWindow.print(); }, 300);
@@ -513,13 +536,56 @@ export default function POS() {
                 })}
               </div>
 
-              {/* Total */}
+              {/* Item Subtotal */}
               <div className="flex justify-end mt-4 pt-3 border-t border-border">
                 <div className="text-right">
-                  <span className="text-sm text-muted-foreground mr-4">Total:</span>
-                  <span className="text-xl font-bold text-primary">¥ {invoiceTotal.toLocaleString('ja-JP')}</span>
+                  <span className="text-sm text-muted-foreground mr-4">Subtotal Item:</span>
+                  <span className="text-base font-semibold">¥ {itemSubtotal.toLocaleString('ja-JP')}</span>
                 </div>
               </div>
+            </div>
+
+            {/* Shaken Payment Section */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <Label className="text-sm font-semibold">Pembayaran Shaken / 車検支払い</Label>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">重量税 / Weight Tax</Label>
+                  <Input type="number" placeholder="0" value={shakenPayment.weight_tax} onChange={(e) => setShakenPayment({ ...shakenPayment, weight_tax: e.target.value })} className="h-9 text-sm" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">自賠責保険 / Jibaiseki</Label>
+                  <Input type="number" placeholder="0" value={shakenPayment.jibaiseki} onChange={(e) => setShakenPayment({ ...shakenPayment, jibaiseki: e.target.value })} className="h-9 text-sm" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">印紙代 / Stamp Fee</Label>
+                  <Input type="number" placeholder="0" value={shakenPayment.stamp_fee} onChange={(e) => setShakenPayment({ ...shakenPayment, stamp_fee: e.target.value })} className="h-9 text-sm" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">代行手数料 / Service Fee</Label>
+                  <Input type="number" placeholder="0" value={shakenPayment.service_fee} onChange={(e) => setShakenPayment({ ...shakenPayment, service_fee: e.target.value })} className="h-9 text-sm" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">整備費用 / Maintenance</Label>
+                  <Input type="number" placeholder="0" value={shakenPayment.maintenance} onChange={(e) => setShakenPayment({ ...shakenPayment, maintenance: e.target.value })} className="h-9 text-sm" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">その他 / Other</Label>
+                  <Input type="number" placeholder="0" value={shakenPayment.other} onChange={(e) => setShakenPayment({ ...shakenPayment, other: e.target.value })} className="h-9 text-sm" />
+                </div>
+              </div>
+              <div className="flex justify-end mt-3">
+                <span className="text-sm text-muted-foreground mr-4">Shaken Subtotal:</span>
+                <span className="text-base font-semibold">¥ {shakenSubtotal.toLocaleString('ja-JP')}</span>
+              </div>
+            </div>
+
+            {/* Grand Total */}
+            <div className="bg-muted/30 rounded-xl p-4 flex justify-between items-center">
+              <span className="text-sm font-semibold">Grand Total:</span>
+              <span className="text-2xl font-bold text-primary">¥ {grandTotal.toLocaleString('ja-JP')}</span>
             </div>
 
             {/* Notes */}
@@ -537,7 +603,7 @@ export default function POS() {
             <Button variant="outline" onClick={() => setShowManualForm(false)}>Batal</Button>
             <Button
               onClick={() => createManualTx.mutate(manualForm)}
-              disabled={!manualForm.category || invoiceTotal <= 0 || createManualTx.isPending}
+              disabled={!manualForm.category || grandTotal <= 0 || createManualTx.isPending}
               className="gap-2"
             >
               <CheckCircle className="w-4 h-4" /> Simpan & Print
