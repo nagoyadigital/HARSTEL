@@ -204,6 +204,30 @@ export default function POS() {
     },
   });
 
+  const deleteTxMutation = useMutation({
+    mutationFn: (id) => base44.entities.Transaction.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      toast.success('Transaksi berhasil dihapus');
+    },
+  });
+
+  const resetAllData = async () => {
+    if (!confirm('RESET SEMUA DATA?\n\nIni akan menghapus seluruh data: Transaksi, Work Order, Invoice, Kendaraan, Pelanggan, Sparepart, dll.\n\nTidak bisa dikembalikan!')) return;
+    if (!confirm('KONFIRMASI TERAKHIR: Yakin hapus semua data?')) return;
+    const entities = ['Transaction', 'WorkOrder', 'Vehicle', 'Customer', 'Sparepart', 'StockMovement', 'Booking', 'Notification', 'Shaken', 'ReminderHistory', 'VehicleBrand', 'Mechanic'];
+    for (const entity of entities) {
+      try {
+        const items = await base44.entities[entity].list();
+        for (const item of items) {
+          await base44.entities[entity].delete(item.id);
+        }
+      } catch { /* skip if entity doesn't exist */ }
+    }
+    queryClient.invalidateQueries();
+    toast.success('Semua data berhasil direset');
+  };
+
   const printManualInvoice = (invoice) => {
     const d = new Date(invoice.date || new Date());
     const year = d.getFullYear();
@@ -359,6 +383,7 @@ ${shakenRows}
       <PageHeader title="Kasir & Invoice" description="Pembayaran, Invoice, & Riwayat Transaksi"
         actions={
           <div className="flex gap-2">
+            <Button variant="destructive" size="sm" onClick={resetAllData} className="gap-2 text-xs"><Trash2 className="w-3.5 h-3.5" />Reset Data</Button>
             <Button variant="outline" onClick={() => setShowSettings(true)} className="gap-2 text-xs"><Settings className="w-3.5 h-3.5" />Pengaturan Invoice</Button>
             <Button onClick={() => setShowManualForm(true)} className="gap-2"><Plus className="w-4 h-4" />Transaksi Manual</Button>
           </div>
@@ -481,6 +506,9 @@ ${shakenRows}
                       </Button>
                     </>
                   )}
+                  <Button size="sm" variant="ghost" className="gap-1 text-xs h-7 text-destructive" onClick={(e) => { e.stopPropagation(); if (confirm('Hapus transaksi ini?')) deleteTxMutation.mutate(row.id); }}>
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
                 </div>
               )},
             ]}
