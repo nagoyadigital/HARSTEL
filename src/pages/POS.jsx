@@ -229,12 +229,12 @@ table { border-collapse: collapse; width: 100%; }
 <tr>
   <!-- LEFT: Customer -->
   <td style="width:50%;vertical-align:top;padding:10px" rowspan="2">
-    <div style="font-size:16px;font-weight:700;border-bottom:2px solid #000;display:inline-block;padding-bottom:4px;margin-bottom:10px">
+    <div style="font-size:20px;font-weight:700;border-bottom:2px solid #000;display:inline-block;padding-bottom:4px;margin-bottom:10px">
       ${invoice.customer_name || '　　　　　　'}　様
     </div>
     <div style="margin-top:12px;font-size:11px;font-weight:700">下記のとおり御請求申し上げます</div>
-    <div style="font-size:14px;font-weight:700;margin-top:8px">税込合計金額</div>
-    <div style="font-size:26px;font-weight:700;margin-top:4px">¥ ${grandTotal.toLocaleString('ja-JP')}</div>
+    <div style="font-size:16px;font-weight:700;margin-top:8px">税込合計金額</div>
+    <div style="font-size:30px;font-weight:700;margin-top:4px">¥ ${grandTotal.toLocaleString('ja-JP')}</div>
   </td>
   <!-- RIGHT: Company (centered) -->
   <td style="width:50%;text-align:center;vertical-align:middle;padding:10px">
@@ -274,8 +274,8 @@ ${emptyRows}
 <!-- ===== SUBTOTAL ===== -->
 <table>
 <tr class="total-row">
-  <td style="width:65%;text-align:center;border:2px solid #000;font-size:14px;font-weight:700">SUBTOTAL</td>
-  <td style="width:35%;text-align:right;border:2px solid #000;font-size:16px;font-weight:700;padding-right:15px">¥ ${itemTotal.toLocaleString('ja-JP')}</td>
+  <td style="width:65%;text-align:center;border:2px solid #000;font-size:16px;font-weight:700">SUBTOTAL</td>
+  <td style="width:35%;text-align:right;border:2px solid #000;font-size:18px;font-weight:700;padding-right:15px">¥ ${itemTotal.toLocaleString('ja-JP')}</td>
 </tr>
 </table>
 
@@ -294,8 +294,8 @@ ${shakenRows}
 <!-- ===== GRAND TOTAL ===== -->
 <table style="margin-top:10px">
 <tr>
-  <td style="width:65%;text-align:center;border:3px solid #000;padding:14px;font-size:22px;font-weight:700;letter-spacing:8px">合　計</td>
-  <td style="width:35%;text-align:right;border:3px solid #000;padding:14px 18px;font-size:26px;font-weight:700">¥ ${grandTotal.toLocaleString('ja-JP')}</td>
+  <td style="width:65%;text-align:center;border:3px solid #000;padding:14px;font-size:26px;font-weight:700;letter-spacing:8px">合　計</td>
+  <td style="width:35%;text-align:right;border:3px solid #000;padding:14px 18px;font-size:30px;font-weight:700">¥ ${grandTotal.toLocaleString('ja-JP')}</td>
 </tr>
 </table>
 
