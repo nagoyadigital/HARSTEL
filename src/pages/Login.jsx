@@ -266,7 +266,7 @@ export default function Login() {
                 className="mt-8 pt-6 border-t border-white/5"
               >
                 <p className="text-center text-xs text-white/30">
-                  &copy; {new Date().getFullYear()} HARSTEL Workshop Management System
+                  &copy; {new Date().getFullYear()} HARSTEL Workshop Management System — Nagoya Digital
                 </p>
               </motion.div>
             </div>
