@@ -92,6 +92,9 @@ export default function Sidebar() {
             {collapsed ? <ChevronRight className="w-[18px] h-[18px]" /> : <ChevronLeft className="w-[18px] h-[18px]" />}
             {!collapsed && <span>Tutup Sidebar</span>}
           </button>
+          {!collapsed && (
+            <p className="text-[10px] text-sidebar-foreground/30 text-center pt-2">Powered by Nagoya Digital</p>
+          )}
         </div>
       </aside>
 
