@@ -42,8 +42,8 @@ export default function Sidebar() {
         {/* Logo */}
         <div className="h-16 flex items-center px-4 border-b border-sidebar-border flex-shrink-0">
           <div className="flex items-center gap-3 overflow-hidden">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center flex-shrink-0">
-              <Wrench className="w-4 h-4 text-primary-foreground" />
+            <div className="w-8 h-8 rounded-lg overflow-hidden flex-shrink-0">
+              <img src="./logo.png" alt="H" className="w-full h-full object-cover" />
             </div>
             {!collapsed && (
               <span className="font-heading font-bold text-sm text-sidebar-primary-foreground whitespace-nowrap">

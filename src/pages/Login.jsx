@@ -119,9 +119,7 @@ export default function Login() {
                 transition={{ delay: 0.2, duration: 0.5, ease: premiumEase }}
                 className="text-center mb-8"
               >
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-red-600 to-red-700 shadow-lg shadow-red-600/30 mb-4">
-                  <Wrench className="w-8 h-8 text-white" />
-                </div>
+                <img src="./logo.png" alt="HARSTEL" className="w-24 h-24 mx-auto rounded-2xl shadow-lg shadow-red-600/20 mb-4" />
                 <h1 className="text-2xl font-bold text-white tracking-tight">
                   HARSTEL
                 </h1>
