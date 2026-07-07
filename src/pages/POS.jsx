@@ -33,6 +33,11 @@ export default function POS() {
   const [invoiceItems, setInvoiceItems] = useState([{ name: '', qty: 1, price: 0 }]);
   const [shakenPayment, setShakenPayment] = useState({ weight_tax: '', jibaiseki: '', stamp_fee: '', service_fee: '', maintenance: '', other: '' });
   const [lastSavedInvoice, setLastSavedInvoice] = useState(null);
+  const [editingTx, setEditingTx] = useState(null);
+  const [editItems, setEditItems] = useState([]);
+  const [editShaken, setEditShaken] = useState({});
+  const [editCustomer, setEditCustomer] = useState('');
+  const [editDescription, setEditDescription] = useState('');
   const queryClient = useQueryClient();
 
   const { data: allWOs = [] } = useQuery({
@@ -154,6 +159,50 @@ export default function POS() {
   });
 
   const categories = manualForm.type === 'Pemasukan' ? ['Jasa Service', 'Penjualan Sparepart', 'Lainnya'] : ['Pembelian Sparepart', 'Gaji', 'Operasional', 'Lainnya'];
+
+  // Edit transaction
+  const openEditTx = (tx) => {
+    setEditingTx(tx);
+    setEditItems(tx.invoice_items || [{ name: '', qty: 1, price: 0, subtotal: 0 }]);
+    setEditShaken(tx.shaken_payment || { weight_tax: '', jibaiseki: '', stamp_fee: '', service_fee: '', maintenance: '', other: '' });
+    setEditCustomer(tx.customer_name || '');
+    setEditDescription(tx.description || '');
+  };
+
+  const updateEditItem = (idx, field, value) => {
+    const updated = [...editItems];
+    updated[idx] = { ...updated[idx], [field]: value };
+    if (field === 'qty' || field === 'price') {
+      updated[idx].subtotal = Math.round((updated[idx].qty || 0) * (updated[idx].price || 0) * 1.1);
+    }
+    setEditItems(updated);
+  };
+
+  const editItemTotal = editItems.reduce((s, i) => s + (i.subtotal || 0), 0);
+  const editShakenTotal = Object.values(editShaken).reduce((s, v) => s + (Number(v) || 0), 0);
+  const editGrandTotal = editItemTotal + editShakenTotal;
+
+  const updateTxMutation = useMutation({
+    mutationFn: async () => {
+      const items = editItems.filter(i => i.name && i.price > 0).map(i => ({
+        name: i.name, qty: i.qty || 1, price: Number(i.price), subtotal: Math.round((i.qty || 1) * Number(i.price) * 1.1),
+      }));
+      const total = items.reduce((s, i) => s + i.subtotal, 0) + editShakenTotal;
+      await base44.entities.Transaction.update(editingTx.id, {
+        customer_name: editCustomer,
+        description: editDescription,
+        invoice_items: items,
+        shaken_payment: editShaken,
+        shaken_subtotal: editShakenTotal,
+        amount: total,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      setEditingTx(null);
+      toast.success('Transaksi berhasil diperbarui');
+    },
+  });
 
   const printManualInvoice = (invoice) => {
     const d = new Date(invoice.date || new Date());
@@ -420,11 +469,20 @@ ${shakenRows}
               { header: 'Invoice', render: (row) => row.invoice_number ? <span className="font-mono text-xs text-primary">{row.invoice_number}</span> : '-' },
               { header: 'Pelanggan', key: 'customer_name' },
               { header: 'Jumlah', render: (row) => <span className={`font-semibold ${row.type === 'Pemasukan' ? 'text-emerald-600' : 'text-red-500'}`}>{row.type === 'Pemasukan' ? '+' : '-'}¥ {(row.amount || 0).toLocaleString('ja-JP')}</span> },
-              { header: '', render: (row) => row.invoice_items ? (
-                <Button size="sm" variant="ghost" className="gap-1 text-xs h-7" onClick={(e) => { e.stopPropagation(); printManualInvoice({ ...row, items: row.invoice_items }); }}>
-                  <Printer className="w-3 h-3" /> Print
-                </Button>
-              ) : null },
+              { header: '', render: (row) => (
+                <div className="flex gap-1">
+                  {row.invoice_items && (
+                    <>
+                      <Button size="sm" variant="ghost" className="gap-1 text-xs h-7" onClick={(e) => { e.stopPropagation(); openEditTx(row); }}>
+                        Edit
+                      </Button>
+                      <Button size="sm" variant="ghost" className="gap-1 text-xs h-7" onClick={(e) => { e.stopPropagation(); printManualInvoice({ ...row, items: row.invoice_items }); }}>
+                        <Printer className="w-3 h-3" /> Print
+                      </Button>
+                    </>
+                  )}
+                </div>
+              )},
             ]}
             data={transactions}
             isLoading={txLoading}
@@ -655,6 +713,77 @@ ${shakenRows}
 
       {/* Invoice Settings */}
       {showSettings && <InvoiceSettings open={showSettings} onClose={() => setShowSettings(false)} />}
+
+      {/* Edit Transaction Dialog */}
+      {editingTx && (
+        <Dialog open={!!editingTx} onOpenChange={(o) => { if (!o) setEditingTx(null); }}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader><DialogTitle>Edit Transaksi — {editingTx.invoice_number}</DialogTitle></DialogHeader>
+            <div className="space-y-5">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Nama Pelanggan</Label>
+                  <Input value={editCustomer} onChange={(e) => setEditCustomer(e.target.value)} />
+                </div>
+                <div>
+                  <Label>Keterangan</Label>
+                  <Input value={editDescription} onChange={(e) => setEditDescription(e.target.value)} />
+                </div>
+              </div>
+
+              {/* Items */}
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <Label className="text-sm font-semibold">Detail Item</Label>
+                  <Button type="button" variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => setEditItems([...editItems, { name: '', qty: 1, price: 0, subtotal: 0 }])}>
+                    <Plus className="w-3.5 h-3.5" /> Tambah
+                  </Button>
+                </div>
+                <div className="space-y-2">
+                  {editItems.map((item, idx) => (
+                    <div key={idx} className="grid grid-cols-[1fr_60px_100px_100px_30px] gap-2 items-center">
+                      <Input placeholder="Nama item" value={item.name} onChange={(e) => updateEditItem(idx, 'name', e.target.value)} className="h-9 text-sm" />
+                      <Input type="number" value={item.qty} onChange={(e) => updateEditItem(idx, 'qty', Number(e.target.value))} className="h-9 text-sm text-center" />
+                      <Input type="number" value={item.price} onChange={(e) => updateEditItem(idx, 'price', Number(e.target.value))} className="h-9 text-sm text-right" />
+                      <span className="text-sm font-semibold text-right">¥ {(item.subtotal || 0).toLocaleString('ja-JP')}</span>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditItems(editItems.filter((_, i) => i !== idx))} disabled={editItems.length <= 1}>
+                        <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex justify-end mt-3 text-sm"><span className="text-muted-foreground mr-3">Subtotal:</span><span className="font-bold">¥ {editItemTotal.toLocaleString('ja-JP')}</span></div>
+              </div>
+
+              {/* Shaken */}
+              <div>
+                <Label className="text-sm font-semibold mb-2 block">Pembayaran Shaken</Label>
+                <div className="grid grid-cols-3 gap-3">
+                  <div><Label className="text-xs">重量税</Label><Input type="number" value={editShaken.weight_tax} onChange={(e) => setEditShaken({ ...editShaken, weight_tax: e.target.value })} className="h-8 text-sm" /></div>
+                  <div><Label className="text-xs">自賠責保険</Label><Input type="number" value={editShaken.jibaiseki} onChange={(e) => setEditShaken({ ...editShaken, jibaiseki: e.target.value })} className="h-8 text-sm" /></div>
+                  <div><Label className="text-xs">印紙代</Label><Input type="number" value={editShaken.stamp_fee} onChange={(e) => setEditShaken({ ...editShaken, stamp_fee: e.target.value })} className="h-8 text-sm" /></div>
+                  <div><Label className="text-xs">代行手数料</Label><Input type="number" value={editShaken.service_fee} onChange={(e) => setEditShaken({ ...editShaken, service_fee: e.target.value })} className="h-8 text-sm" /></div>
+                  <div><Label className="text-xs">整備費用</Label><Input type="number" value={editShaken.maintenance} onChange={(e) => setEditShaken({ ...editShaken, maintenance: e.target.value })} className="h-8 text-sm" /></div>
+                  <div><Label className="text-xs">その他</Label><Input type="number" value={editShaken.other} onChange={(e) => setEditShaken({ ...editShaken, other: e.target.value })} className="h-8 text-sm" /></div>
+                </div>
+                <div className="flex justify-end mt-2 text-sm"><span className="text-muted-foreground mr-3">Shaken:</span><span className="font-bold">¥ {editShakenTotal.toLocaleString('ja-JP')}</span></div>
+              </div>
+
+              {/* Grand Total */}
+              <div className="bg-muted/30 rounded-xl p-4 flex justify-between items-center">
+                <span className="text-sm font-semibold">Grand Total:</span>
+                <span className="text-xl font-bold text-primary">¥ {editGrandTotal.toLocaleString('ja-JP')}</span>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setEditingTx(null)}>Batal</Button>
+              <Button onClick={() => updateTxMutation.mutate()} disabled={updateTxMutation.isPending} className="gap-2">
+                <CheckCircle className="w-4 h-4" /> Simpan Perubahan
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
