@@ -19,6 +19,7 @@ import VehicleLookup from '@/pages/VehicleLookup';
 import Shaken from '@/pages/Shaken';
 import MasterData from '@/pages/MasterData';
 import TaxReport from '@/pages/TaxReport';
+import Settings from '@/pages/Settings';
 import AppLayout from '@/components/layout/AppLayout';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Login from '@/pages/Login';
@@ -72,6 +73,7 @@ function AppRoutes() {
           <Route path="/reports" element={<Reports />} />
           <Route path="/shaken" element={<Shaken />} />
           <Route path="/tax-report" element={<TaxReport />} />
+          <Route path="/settings" element={<Settings />} />
           <Route path="/master-data" element={<MasterData />} />
           <Route path="/vehicle-lookup" element={<VehicleLookup />} />
         </Route>

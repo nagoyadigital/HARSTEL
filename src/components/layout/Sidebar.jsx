@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Car, Wrench, Package, UserCog,
   Receipt, Calendar, BarChart3, ChevronLeft, ChevronRight,
-  LogOut, Warehouse, Search, ShieldCheck, Database, Calculator
+  LogOut, Warehouse, Search, ShieldCheck, Database, Calculator, Settings
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import LogoutConfirmModal from '@/components/shared/LogoutConfirmModal';
@@ -23,6 +23,7 @@ const menuItems = [
   { icon: BarChart3, label: 'Laporan', path: '/reports' },
   { icon: Calculator, label: 'Laporan Pajak', path: '/tax-report' },
   { icon: Database, label: 'Master Data', path: '/master-data' },
+  { icon: Settings, label: 'Pengaturan', path: '/settings' },
 ];
 
 export default function Sidebar() {

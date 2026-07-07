@@ -280,6 +280,35 @@ export const localAuth = {
   },
 
   redirectToLogin(returnUrl) {
-    window.location.hash = '/login' + (returnUrl ? `?returnUrl=${encodeURIComponent(returnUrl)}` : '')
+    window.location.href = '/login' + (returnUrl ? `?returnUrl=${encodeURIComponent(returnUrl)}` : '')
+  },
+
+  async changeCredentials({ currentPassword, newUsername, newPassword }) {
+    const session = getSession()
+    if (!session) throw new Error('Anda harus login terlebih dahulu')
+
+    const users = getUsers()
+    const user = users.find(u => u.id === session.userId)
+    if (!user) throw new Error('User tidak ditemukan')
+
+    const isValid = await verifyPassword(currentPassword, user.password)
+    if (!isValid) throw new Error('Password saat ini salah')
+
+    if (newUsername && newUsername !== user.username) {
+      if (users.find(u => u.username === newUsername && u.id !== user.id)) {
+        throw new Error('Username sudah digunakan')
+      }
+      user.username = newUsername
+      user.name = newUsername
+      user.full_name = newUsername
+    }
+
+    if (newPassword) {
+      user.password = await hashPassword(newPassword)
+    }
+
+    setUsers(users)
+    logActivity('credentials_changed', { userId: user.id, username: user.username })
+    return { success: true }
   },
 }
