@@ -18,34 +18,87 @@ export default function VehicleLookup() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
   const [expandedWO, setExpandedWO] = useState(null);
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  // Live search - show suggestions after 3 characters
+  const handleQueryChange = async (value) => {
+    setQuery(value);
+    setResult(null);
+    setError('');
+
+    if (value.trim().length < 3) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    try {
+      const allVehicles = await base44.entities.Vehicle.list();
+      const q = value.trim().toLowerCase();
+      const matches = allVehicles.filter(v => {
+        if (searchType === 'chassis') {
+          return v.chassis_number?.toLowerCase().includes(q);
+        } else {
+          return v.engine_number?.toLowerCase().includes(q);
+        }
+      }).slice(0, 8);
+      setSuggestions(matches);
+      setShowSuggestions(matches.length > 0);
+    } catch {
+      setSuggestions([]);
+    }
+  };
+
+  const selectSuggestion = async (vehicle) => {
+    setShowSuggestions(false);
+    setQuery(searchType === 'chassis' ? vehicle.chassis_number : vehicle.engine_number);
+    await loadVehicleDetail(vehicle);
+  };
+
+  const loadVehicleDetail = async (vehicle) => {
+    setLoading(true);
+    setError('');
+    try {
+      let customer = null;
+      let workOrders = [];
+      if (vehicle.customer_id) {
+        try { customer = await base44.entities.Customer.get(vehicle.customer_id); } catch { /* */ }
+        workOrders = await base44.entities.WorkOrder.filter({ vehicle_id: vehicle.id }, '-created_date', 50);
+      }
+      setResult({ vehicle, customer, workOrders });
+    } catch {
+      setError('Gagal memuat data kendaraan.');
+    }
+    setLoading(false);
+  };
 
   const handleSearch = async () => {
     if (!query.trim()) return;
     setLoading(true);
     setError('');
     setResult(null);
+    setShowSuggestions(false);
 
     try {
-      const filterField = searchType === 'chassis' ? 'chassis_number' : 'engine_number';
-      const vehicles = await base44.entities.Vehicle.filter({ [filterField]: query.trim() }, '-created_date', 5);
-      if (!vehicles || vehicles.length === 0) {
+      const allVehicles = await base44.entities.Vehicle.list();
+      const q = query.trim().toLowerCase();
+      const matches = allVehicles.filter(v => {
+        if (searchType === 'chassis') {
+          return v.chassis_number?.toLowerCase().includes(q);
+        } else {
+          return v.engine_number?.toLowerCase().includes(q);
+        }
+      });
+
+      if (matches.length === 0) {
         setError('Kendaraan tidak ditemukan. Periksa kembali nomor rangka/mesin.');
         setLoading(false);
         return;
       }
 
-      const vehicle = vehicles[0];
-      let customer = null;
-      let workOrders = [];
-
-      if (vehicle.customer_id) {
-        try {
-          customer = await base44.entities.Customer.get(vehicle.customer_id);
-        } catch (e) { /* customer might be deleted */ }
-        workOrders = await base44.entities.WorkOrder.filter({ vehicle_id: vehicle.id }, '-created_date', 50);
-      }
-
-      setResult({ vehicle, customer, workOrders });
+      const vehicle = matches[0];
+      await loadVehicleDetail(vehicle);
     } catch (e) {
       setError('Gagal mencari data. Coba lagi.');
     }
@@ -63,7 +116,7 @@ export default function VehicleLookup() {
 
       {/* Search Bar */}
       <div className="bg-card rounded-xl border border-border p-5">
-        <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex flex-col sm:flex-row gap-3 relative">
           <div className="flex rounded-lg border border-border overflow-hidden w-full sm:w-auto">
             <button
               onClick={() => setSearchType('chassis')}
@@ -80,10 +133,11 @@ export default function VehicleLookup() {
           </div>
           <div className="flex-1 flex gap-2">
             <Input
-              placeholder={searchType === 'chassis' ? 'Masukkan nomor rangka...' : 'Masukkan nomor mesin...'}
+              placeholder={searchType === 'chassis' ? 'Masukkan nomor rangka (min 3 huruf)...' : 'Masukkan nomor mesin (min 3 huruf)...'}
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => handleQueryChange(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+              onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
               className="flex-1"
             />
             <Button onClick={handleSearch} disabled={loading}>
@@ -91,6 +145,29 @@ export default function VehicleLookup() {
               {loading ? 'Mencari...' : 'Cari'}
             </Button>
           </div>
+
+          {/* Suggestions Dropdown */}
+          {showSuggestions && (
+            <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-xl z-50 max-h-[300px] overflow-y-auto">
+              {suggestions.map(v => (
+                <button
+                  key={v.id}
+                  className="w-full text-left px-4 py-3 hover:bg-muted/50 border-b border-border/50 last:border-b-0 transition-colors"
+                  onClick={() => selectSuggestion(v)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold">{v.plate_number}</p>
+                      <p className="text-xs text-muted-foreground">{v.brand} {v.model} {v.year} • {v.customer_name}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs font-mono text-primary">{searchType === 'chassis' ? v.chassis_number : v.engine_number}</p>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
         {error && (
           <div className="flex items-center gap-2 mt-3 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
