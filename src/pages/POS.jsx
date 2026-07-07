@@ -171,7 +171,7 @@ export default function POS() {
     const itemRows = items.map((item, idx) =>
       `<tr><td class="td num">${idx + 1}</td><td class="td name">${item.name}</td><td class="td amount">¥ ${item.subtotal.toLocaleString('ja-JP')}</td></tr>`
     ).join('');
-    const emptyRows = Array(Math.max(0, 12 - items.length)).fill(
+    const emptyRows = Array(Math.max(0, 8 - items.length)).fill(
       `<tr><td class="td num">&nbsp;</td><td class="td name"></td><td class="td amount"></td></tr>`
     ).join('');
 
@@ -185,21 +185,21 @@ export default function POS() {
       { name: 'LAIN-LAIN', amount: Number(shaken.other) || 0 },
     ];
     const shakenRows = shakenEntries.map(item =>
-      `<tr><td class="td name" colspan="2" style="text-align:right;padding-right:20px;font-size:12px;font-weight:700">${item.name}</td><td class="td amount" style="font-size:13px;font-weight:700">¥ ${item.amount > 0 ? item.amount.toLocaleString('ja-JP') : '0'}</td></tr>`
+      `<tr><td class="td name" colspan="2" style="text-align:right;padding-right:20px;font-size:12px;font-weight:700">${item.name}</td><td class="td amount" style="font-size:12px;font-weight:700">¥ ${item.amount > 0 ? item.amount.toLocaleString('ja-JP') : '0'}</td></tr>`
     ).join('');
 
     const pw = window.open('', '_blank');
     pw.document.write(`<!DOCTYPE html><html><head><title>請求書</title>
 <style>
-@page { size: A4 portrait; margin: 12mm 15mm; }
+@page { size: A4 portrait; margin: 8mm 10mm; }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Yu Gothic', 'Meiryo', 'MS Gothic', sans-serif; color: #000; font-size: 12px; font-weight: 700; }
-table { border-collapse: collapse; width: 100%; }
-.td { border: 1px solid #000; padding: 6px 10px; font-size: 12px; font-weight: 700; }
-.td.num { width: 35px; text-align: center; }
+body { font-family: 'Yu Gothic', 'Meiryo', 'MS Gothic', sans-serif; color: #000; font-size: 12px; font-weight: 700; max-height: 100vh; overflow: hidden; }
+table { border-collapse: collapse; width: 100%; page-break-inside: avoid; }
+.td { border: 1px solid #000; padding: 3px 6px; font-size: 12px; font-weight: 700; }
+.td.num { width: 30px; text-align: center; }
 .td.name { text-align: left; }
-.td.amount { width: 140px; text-align: right; }
-.header td { border: 1px solid #000; padding: 6px 10px; font-weight: 700; }
+.td.amount { width: 120px; text-align: right; }
+.header td { border: 1px solid #000; padding: 4px 8px; font-weight: 700; font-size: 12px; }
 .center { text-align: center; }
 .right { text-align: right; }
 .bold { font-weight: 700; }
@@ -209,46 +209,46 @@ table { border-collapse: collapse; width: 100%; }
 <!-- ===== HEADER: INVOICE + DATE ===== -->
 <table class="header">
 <tr>
-  <td style="width:50%;font-size:13px;font-weight:700;text-decoration:underline;letter-spacing:3px">INVOICE</td>
+  <td style="width:50%;font-size:12px;font-weight:700;text-decoration:underline;letter-spacing:3px">INVOICE</td>
   <td class="center" style="width:6%">年</td>
-  <td class="center bold" style="width:11%;font-size:14px">${year}</td>
+  <td class="center bold" style="width:11%;font-size:12px">${year}</td>
   <td class="center" style="width:6%">月</td>
-  <td class="center bold" style="width:8%;font-size:14px">${month}</td>
+  <td class="center bold" style="width:8%;font-size:12px">${month}</td>
   <td class="center" style="width:6%">日</td>
-  <td class="center bold" style="width:8%;font-size:14px">${day}</td>
+  <td class="center bold" style="width:8%;font-size:12px">${day}</td>
 </tr>
 </table>
 
 <!-- ===== TITLE: 請求書 ===== -->
 <table class="header">
-<tr><td class="center bold" style="font-size:20px;letter-spacing:12px;padding:8px">請 求 書</td></tr>
+<tr><td class="center bold" style="font-size:18px;letter-spacing:12px;padding:6px">請 求 書</td></tr>
 </table>
 
 <!-- ===== CUSTOMER + COMPANY ===== -->
 <table class="header">
 <tr>
   <!-- LEFT: Customer -->
-  <td style="width:50%;vertical-align:top;padding:10px" rowspan="2">
-    <div style="font-size:20px;font-weight:700;border-bottom:2px solid #000;display:inline-block;padding-bottom:4px;margin-bottom:10px">
+  <td style="width:50%;vertical-align:top;padding:8px" rowspan="2">
+    <div style="font-size:22px;font-weight:700;border-bottom:2px solid #000;display:inline-block;padding-bottom:4px;margin-bottom:8px">
       ${invoice.customer_name || '　　　　　　'}　様
     </div>
-    <div style="margin-top:12px;font-size:11px;font-weight:700">下記のとおり御請求申し上げます</div>
-    <div style="font-size:16px;font-weight:700;margin-top:8px">税込合計金額</div>
-    <div style="font-size:30px;font-weight:700;margin-top:4px">¥ ${grandTotal.toLocaleString('ja-JP')}</div>
+    <div style="margin-top:8px;font-size:12px;font-weight:700">下記のとおり御請求申し上げます</div>
+    <div style="font-size:12px;font-weight:700;margin-top:6px">税込合計金額</div>
+    <div style="font-size:22px;font-weight:700;margin-top:4px">¥ ${grandTotal.toLocaleString('ja-JP')}</div>
   </td>
   <!-- RIGHT: Company (centered) -->
-  <td style="width:50%;text-align:center;vertical-align:middle;padding:10px">
-    <div style="font-size:22px;font-weight:700;margin-bottom:6px">HARSTEL</div>
-    <div style="font-size:11px;font-weight:700">登録番号：T3810590640185</div>
-    <div style="font-size:12px;font-weight:700;margin-top:4px">愛知県碧南市湖西町２−８３</div>
-    <div style="font-size:13px;font-weight:700;margin-top:4px">TEL: 0566-57-6225</div>
-    <div style="font-size:12px;font-weight:700;margin-top:3px">MOBILE: 090-6357-9803</div>
+  <td style="width:50%;text-align:center;vertical-align:middle;padding:8px">
+    <div style="font-size:22px;font-weight:700;margin-bottom:4px">HARSTEL</div>
+    <div style="font-size:12px;font-weight:700">登録番号：T3810590640185</div>
+    <div style="font-size:12px;font-weight:700;margin-top:3px">愛知県碧南市湖西町２−８３</div>
+    <div style="font-size:12px;font-weight:700;margin-top:3px">TEL: 0566-57-6225</div>
+    <div style="font-size:12px;font-weight:700;margin-top:2px">MOBILE: 090-6357-9803</div>
   </td>
 </tr>
 <tr>
   <!-- RIGHT: Bank info (centered) -->
-  <td style="text-align:center;padding:10px;font-size:12px;font-weight:700;vertical-align:middle">
-    <div style="font-size:13px;margin-bottom:4px">振込先</div>
+  <td style="text-align:center;padding:8px;font-size:12px;font-weight:700;vertical-align:middle">
+    <div style="font-size:12px;margin-bottom:3px">振込先</div>
     <div>ゆうちょ銀行　店番: 208</div>
     <div>普通口座：12060-11454171</div>
     <div>口座名義：ハリープラセティヤ</div>
@@ -274,8 +274,8 @@ ${emptyRows}
 <!-- ===== SUBTOTAL ===== -->
 <table>
 <tr class="total-row">
-  <td style="width:65%;text-align:center;border:2px solid #000;font-size:16px;font-weight:700">SUBTOTAL</td>
-  <td style="width:35%;text-align:right;border:2px solid #000;font-size:18px;font-weight:700;padding-right:15px">¥ ${itemTotal.toLocaleString('ja-JP')}</td>
+  <td style="width:65%;text-align:center;border:2px solid #000;font-size:12px;font-weight:700">SUBTOTAL</td>
+  <td style="width:35%;text-align:right;border:2px solid #000;font-size:12px;font-weight:700;padding-right:12px">¥ ${itemTotal.toLocaleString('ja-JP')}</td>
 </tr>
 </table>
 
@@ -292,10 +292,10 @@ ${shakenRows}
 ` : ''}
 
 <!-- ===== GRAND TOTAL ===== -->
-<table style="margin-top:10px">
+<table style="margin-top:6px">
 <tr>
-  <td style="width:65%;text-align:center;border:3px solid #000;padding:14px;font-size:26px;font-weight:700;letter-spacing:8px">合　計</td>
-  <td style="width:35%;text-align:right;border:3px solid #000;padding:14px 18px;font-size:30px;font-weight:700">¥ ${grandTotal.toLocaleString('ja-JP')}</td>
+  <td style="width:65%;text-align:center;border:3px solid #000;padding:10px;font-size:16px;font-weight:700;letter-spacing:6px">合　計</td>
+  <td style="width:35%;text-align:right;border:3px solid #000;padding:10px 12px;font-size:22px;font-weight:700">¥ ${grandTotal.toLocaleString('ja-JP')}</td>
 </tr>
 </table>
 
