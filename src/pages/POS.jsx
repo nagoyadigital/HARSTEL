@@ -150,61 +150,118 @@ export default function POS() {
   const categories = manualForm.type === 'Pemasukan' ? ['Jasa Service', 'Penjualan Sparepart', 'Lainnya'] : ['Pembelian Sparepart', 'Gaji', 'Operasional', 'Lainnya'];
 
   const printManualInvoice = (invoice) => {
-    const itemRows = (invoice.items || []).map((item, idx) =>
-      `<tr style="background:${idx % 2 === 0 ? '#fff' : '#fafafa'}">
-        <td style="padding:7px 6px;border-bottom:1px solid #eee;font-size:10px">${idx + 1}</td>
-        <td style="padding:7px 6px;border-bottom:1px solid #eee;font-size:10px;font-weight:500">${item.name}</td>
-        <td style="padding:7px 6px;border-bottom:1px solid #eee;font-size:10px;text-align:right">${item.qty}</td>
-        <td style="padding:7px 6px;border-bottom:1px solid #eee;font-size:10px;text-align:right">¥ ${item.price.toLocaleString('ja-JP')}</td>
-        <td style="padding:7px 6px;border-bottom:1px solid #eee;font-size:10px;text-align:right;font-weight:600">¥ ${item.subtotal.toLocaleString('ja-JP')}</td>
+    const invoiceDate = new Date(invoice.date || new Date());
+    const year = invoiceDate.getFullYear();
+    const month = String(invoiceDate.getMonth() + 1).padStart(2, '0');
+    const day = String(invoiceDate.getDate()).padStart(2, '0');
+
+    const itemRows = (invoice.items || []).map((item) =>
+      `<tr>
+        <td class="cell">${month}</td>
+        <td class="cell">${day}</td>
+        <td class="cell left">${item.name}</td>
+        <td class="cell right">¥ ${item.subtotal.toLocaleString('ja-JP')}</td>
       </tr>`
     ).join('');
 
+    // Fill empty rows to make table look complete (min 10 rows)
+    const emptyRows = Math.max(0, 10 - (invoice.items || []).length);
+    const emptyRowsHtml = Array(emptyRows).fill(
+      `<tr><td class="cell">&nbsp;</td><td class="cell"></td><td class="cell left"></td><td class="cell right"></td></tr>`
+    ).join('');
+
+    const totalAmount = invoice.amount || 0;
+
     const printWindow = window.open('', '_blank');
-    printWindow.document.write(`<!DOCTYPE html><html><head><title>Invoice ${invoice.invoice_number}</title>
+    printWindow.document.write(`<!DOCTYPE html><html><head><title>請求書 ${invoice.invoice_number}</title>
       <style>
-        @page { size: A4 portrait; margin: 15mm; }
+        @page { size: A4 portrait; margin: 12mm; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Yu Gothic', 'Meiryo', 'Hiragino Sans', sans-serif; font-size: 10px; color: #1a1a1a; line-height: 1.5; padding: 20mm; }
-        .header { display: flex; justify-content: space-between; margin-bottom: 25px; }
-        .company { font-size: 9px; color: #555; }
-        .company-name { font-size: 16px; font-weight: 700; color: #c41e3a; margin-bottom: 4px; }
-        .title { text-align: center; margin: 20px 0 30px; }
-        .title h1 { font-size: 22px; font-weight: 700; letter-spacing: 8px; }
-        .title p { font-size: 11px; color: #666; margin-top: 2px; }
-        .info { margin-bottom: 20px; font-size: 10px; }
-        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
-        th { background: #1a1a1a; color: white; padding: 8px 6px; font-size: 9px; text-align: left; font-weight: 600; }
-        .total { margin-top: 15px; text-align: right; font-size: 16px; font-weight: 700; color: #c41e3a; border-top: 2px solid #1a1a1a; padding-top: 12px; }
-        .footer { margin-top: 40px; text-align: center; font-size: 8px; color: #999; border-top: 1px solid #eee; padding-top: 10px; }
+        body { font-family: 'Yu Gothic', 'Meiryo', 'Hiragino Sans', 'MS Gothic', sans-serif; font-size: 11px; color: #000; line-height: 1.6; padding: 10mm; }
+        .invoice-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+        .invoice-label { font-size: 10px; color: #666; letter-spacing: 2px; }
+        .date-area { text-align: right; font-size: 12px; }
+        .date-area span { margin: 0 2px; }
+        .title { text-align: center; margin: 20px 0; }
+        .title h1 { font-size: 28px; font-weight: 700; letter-spacing: 12px; border-bottom: 3px solid #000; display: inline-block; padding-bottom: 4px; }
+        .customer-company { display: flex; justify-content: space-between; margin: 25px 0; }
+        .customer { flex: 1; }
+        .customer-name { font-size: 18px; font-weight: 700; border-bottom: 2px solid #000; padding-bottom: 4px; display: inline-block; }
+        .customer-sama { font-size: 14px; margin-left: 8px; }
+        .company-info { text-align: right; font-size: 11px; line-height: 1.8; }
+        .company-info .name { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+        .total-box { border: 3px solid #000; padding: 12px 20px; margin: 20px 0; display: flex; justify-content: space-between; align-items: center; }
+        .total-label { font-size: 14px; font-weight: 700; }
+        .total-value { font-size: 22px; font-weight: 700; }
+        .items-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        .items-table th { background: #000; color: #fff; padding: 8px 10px; font-size: 11px; font-weight: 600; text-align: center; border: 1px solid #000; }
+        .items-table .cell { border: 1px solid #000; padding: 6px 10px; font-size: 11px; text-align: center; min-height: 24px; }
+        .items-table .cell.left { text-align: left; }
+        .items-table .cell.right { text-align: right; }
+        .summary-row { border: 1px solid #000; }
+        .summary-row td { padding: 8px 10px; font-size: 12px; font-weight: 700; border: 1px solid #000; }
+        .bank-info { margin-top: 30px; font-size: 11px; line-height: 1.8; }
+        .bank-info .label { font-weight: 700; margin-bottom: 4px; }
       </style></head><body>
-      <div class="header">
-        <div>
-          <div class="company-name">HARSTEL WORKSHOP</div>
-          <div class="company">〒447-0082<br>2 Chome-83 Koseimachi, Hekinan, Aichi, Japan<br>TEL: 090-6357-9803 / FAX: 0566-57-6225</div>
-        </div>
-        <div style="text-align:right;font-size:9px;color:#555">
-          <p><strong>Invoice No:</strong> ${invoice.invoice_number}</p>
-          <p><strong>Tanggal:</strong> ${invoice.date}</p>
-          <p><strong>Pembayaran:</strong> Cash</p>
+
+      <!-- Header -->
+      <div class="invoice-header">
+        <div class="invoice-label">INVOICE</div>
+        <div class="date-area">
+          年 <span>${year}</span> 月 <span>${month}</span> 日 <span>${day}</span>
         </div>
       </div>
-      <div class="title"><h1>請求書</h1><p>INVOICE</p></div>
-      <div class="info">
-        <p><strong>Pelanggan:</strong> ${invoice.customer_name || '-'}</p>
-        ${invoice.description ? `<p><strong>Keterangan:</strong> ${invoice.description}</p>` : ''}
+
+      <!-- Title -->
+      <div class="title">
+        <h1>請求書</h1>
       </div>
-      <table>
-        <thead><tr>
-          <th>No</th><th>Nama Barang/Jasa</th><th style="text-align:right">Qty</th><th style="text-align:right">Harga</th><th style="text-align:right">Subtotal</th>
-        </tr></thead>
-        <tbody>${itemRows}</tbody>
+
+      <!-- Customer & Company -->
+      <div class="customer-company">
+        <div class="customer">
+          <span class="customer-name">${invoice.customer_name || '　　　　　　'}</span>
+          <span class="customer-sama">様</span>
+        </div>
+        <div class="company-info">
+          <div class="name">HARSTEL</div>
+          登録番号：T3810590640185<br>
+          愛知県碧南市湖西町２－８３<br>
+          0566-57-6225<br><br>
+          <span style="font-weight:700">振込先</span><br>
+          ゆうちょ銀行<br>
+          店番 208<br>
+          普通口座：12060-11454171<br>
+          口座名義：ハリープラセティヤ
+        </div>
+      </div>
+
+      <!-- Total Box -->
+      <div class="total-box">
+        <div class="total-label">税込合計金額</div>
+        <div class="total-value">¥ ${totalAmount.toLocaleString('ja-JP')}</div>
+      </div>
+
+      <!-- Items Table -->
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th style="width:50px">月</th>
+            <th style="width:50px">日</th>
+            <th>品名</th>
+            <th style="width:120px">金額</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${itemRows}
+          ${emptyRowsHtml}
+          <tr class="summary-row">
+            <td colspan="3" style="text-align:right">合計</td>
+            <td style="text-align:right">¥ ${totalAmount.toLocaleString('ja-JP')}</td>
+          </tr>
+        </tbody>
       </table>
-      <div class="total">ご請求金額: ¥ ${(invoice.amount || 0).toLocaleString('ja-JP')}</div>
-      <div class="footer">
-        <p>HARSTEL WORKSHOP | 〒447-0082 2 Chome-83 Koseimachi, Hekinan, Aichi, Japan</p>
-        <p>TEL: 090-6357-9803 | FAX: 0566-57-6225</p>
-      </div>
+
       </body></html>`);
     printWindow.document.close();
     printWindow.focus();
