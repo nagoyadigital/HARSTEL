@@ -43,7 +43,8 @@
           "arch": ["x64"]
         }
       ],
-      "icon": "build/icon2.ico"
+      "icon": "build/icon2.ico",
+      "signAndEditExecutable": false
     },
     "nsis": {
       "oneClick": true,
