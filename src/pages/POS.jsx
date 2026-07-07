@@ -103,7 +103,7 @@ export default function POS() {
     },
   });
 
-  const invoiceTotal = invoiceItems.reduce((sum, item) => sum + ((item.qty || 0) * (item.price || 0)), 0);
+  const invoiceTotal = invoiceItems.reduce((sum, item) => sum + Math.round((item.qty || 0) * (item.price || 0) * 1.1), 0);
 
   const addInvoiceItem = () => setInvoiceItems([...invoiceItems, { name: '', qty: 1, price: 0 }]);
   const removeInvoiceItem = (idx) => setInvoiceItems(invoiceItems.filter((_, i) => i !== idx));
@@ -117,7 +117,7 @@ export default function POS() {
     mutationFn: (data) => {
       const items = invoiceItems
         .filter(i => i.name && i.price > 0)
-        .map(i => ({ name: i.name, qty: i.qty || 1, price: Number(i.price), subtotal: (i.qty || 1) * Number(i.price) }));
+        .map(i => ({ name: i.name, qty: i.qty || 1, price: Number(i.price), subtotal: Math.round((i.qty || 1) * Number(i.price) * 1.1) }));
       const total = items.reduce((sum, i) => sum + i.subtotal, 0);
       const invNumber = generateInvoiceNumber();
 
@@ -417,7 +417,7 @@ export default function POS() {
               {/* Items */}
               <div className="space-y-2">
                 {invoiceItems.map((item, idx) => {
-                  const subtotal = (item.qty || 0) * (item.price || 0);
+                  const subtotal = Math.round((item.qty || 0) * (item.price || 0) * 1.1);
                   return (
                     <div key={idx} className="grid grid-cols-[1fr_70px_110px_110px_36px] gap-2 items-center">
                       <Input
