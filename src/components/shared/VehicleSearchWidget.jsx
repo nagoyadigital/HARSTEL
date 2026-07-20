@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useNavigate } from 'react-router-dom';
 import {
-  Search, Car, User, Wrench, ChevronDown, ChevronUp, Clock, MapPin, Phone, Mail, Calendar,
-  ClipboardList, Package, BadgeCheck, DollarSign, AlertCircle, ShieldAlert
+  Search, Car, User, Wrench, ChevronDown, ChevronUp, MapPin, Phone, Mail,
+  ClipboardList, BadgeCheck, AlertCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

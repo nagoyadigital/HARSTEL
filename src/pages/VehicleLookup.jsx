@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import {
   Search, Car, User, MapPin, Phone, Mail, Calendar, Wrench,
-  ClipboardList, Package, ChevronDown, ChevronUp, AlertCircle,
-  Clock, BadgeCheck, DollarSign
+  ClipboardList, ChevronDown, ChevronUp, AlertCircle,
+  Clock, BadgeCheck
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

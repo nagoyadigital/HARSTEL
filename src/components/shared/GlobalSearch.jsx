@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useNavigate } from 'react-router-dom';
-import { Search, Car, Users, Wrench, Loader2, ArrowRight, X, ShieldAlert } from 'lucide-react';
+import { Search, Car, Users, Wrench, Loader2, ArrowRight, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import ShakengBadge from '@/components/shared/ShakengBadge';
 import StatusBadge from '@/components/shared/StatusBadge';
