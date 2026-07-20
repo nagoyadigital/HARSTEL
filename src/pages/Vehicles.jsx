@@ -224,23 +224,28 @@ export default function Vehicles() {
             </div>
             <div>
               <Label>Model *</Label>
-              <Select value={formData.model && !formData._manualModel ? formData.model : '__other'} onValueChange={(v) => {
-                if (v === '__other') {
-                  set('model', '');
-                  set('_manualModel', true);
-                } else {
-                  set('model', v);
-                  set('_manualModel', false);
-                }
-              }} disabled={!formData.brand}>
-                <SelectTrigger><SelectValue placeholder={formData.brand ? 'Pilih model' : 'Pilih merk dulu'} /></SelectTrigger>
-                <SelectContent className="max-h-[300px]">
-                  {modelsForBrand.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
-                  <SelectItem value="__other">Lainnya (ketik manual)</SelectItem>
-                </SelectContent>
-              </Select>
-              {formData._manualModel && (
-                <Input className="mt-2" placeholder="Ketik nama model" value={formData.model} onChange={(e) => set('model', e.target.value)} />
+              {!formData._manualModel ? (
+                <Select value={formData.model} onValueChange={(v) => {
+                  if (v === '__other') {
+                    set('_manualModel', true);
+                    set('model', '');
+                  } else {
+                    set('model', v);
+                  }
+                }} disabled={!formData.brand}>
+                  <SelectTrigger><SelectValue placeholder={formData.brand ? 'Pilih model' : 'Pilih merk dulu'} /></SelectTrigger>
+                  <SelectContent className="max-h-[300px]">
+                    {modelsForBrand.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                    <SelectItem value="__other">Lainnya (ketik manual)</SelectItem>
+                  </SelectContent>
+                </Select>
+              ) : (
+                <div className="space-y-2">
+                  <Input placeholder="Ketik nama model kendaraan" value={formData.model} onChange={(e) => set('model', e.target.value)} autoFocus />
+                  <button type="button" onClick={() => { set('_manualModel', false); set('model', ''); }} className="text-xs text-primary hover:underline">
+                    Kembali ke daftar model
+                  </button>
+                </div>
               )}
             </div>
             <div><Label>Tahun</Label><Input type="number" value={formData.year} onChange={(e) => set('year', e.target.value)} placeholder="2024" /></div>
