@@ -17,6 +17,7 @@ const emptyForm = {
   customer_id: '', plate_number: '', brand: '', model: '', year: '', color: '',
   chassis_number: '', engine_number: '', fuel_type: '', transmission: '',
   last_odometer: '', shakeng_date: '', shakeng_expiry: '', vehicle_category: '',
+  _manualModel: false,
 };
 
 function computeShakeng(expiry) {
@@ -223,15 +224,23 @@ export default function Vehicles() {
             </div>
             <div>
               <Label>Model *</Label>
-              <Select value={formData.model} onValueChange={(v) => set('model', v)} disabled={!formData.brand}>
+              <Select value={formData.model && !formData._manualModel ? formData.model : '__other'} onValueChange={(v) => {
+                if (v === '__other') {
+                  set('model', '');
+                  set('_manualModel', true);
+                } else {
+                  set('model', v);
+                  set('_manualModel', false);
+                }
+              }} disabled={!formData.brand}>
                 <SelectTrigger><SelectValue placeholder={formData.brand ? 'Pilih model' : 'Pilih merk dulu'} /></SelectTrigger>
                 <SelectContent className="max-h-[300px]">
                   {modelsForBrand.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
                   <SelectItem value="__other">Lainnya (ketik manual)</SelectItem>
                 </SelectContent>
               </Select>
-              {formData.model === '__other' && (
-                <Input className="mt-2" placeholder="Ketik nama model" onChange={(e) => set('model', e.target.value)} />
+              {formData._manualModel && (
+                <Input className="mt-2" placeholder="Ketik nama model" value={formData.model} onChange={(e) => set('model', e.target.value)} />
               )}
             </div>
             <div><Label>Tahun</Label><Input type="number" value={formData.year} onChange={(e) => set('year', e.target.value)} placeholder="2024" /></div>
