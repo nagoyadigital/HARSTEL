@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   build-windows:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -21,6 +21,12 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
+
+      - name: Install Wine
+        run: |
+          sudo dpkg --add-architecture i386
+          sudo apt-get update
+          sudo apt-get install -y wine64 wine32
 
       - name: Install dependencies
         run: npm ci
@@ -38,12 +44,6 @@ jobs:
         with:
           name: HARSTEL-Workshop-Windows-Setup
           path: release/*.exe
-
-      - name: Upload Portable EXE
-        uses: actions/upload-artifact@v4
-        with:
-          name: HARSTEL-Workshop-Windows-Portable
-          path: release/win-unpacked/HARSTEL Workshop.exe
 
       - name: Create Release (on tag)
         if: startsWith(github.ref, 'refs/tags/')
