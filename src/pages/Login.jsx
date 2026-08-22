@@ -21,6 +21,9 @@ export default function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
+  const [showRecovery, setShowRecovery] = useState(false);
+  const [recoveryCode, setRecoveryCode] = useState("");
+  const [recoveryMsg, setRecoveryMsg] = useState("");
   const navigate = useNavigate();
   const { checkUserAuth } = useAuth();
 
@@ -206,21 +209,55 @@ export default function Login() {
                   </div>
                 </div>
 
-                {/* Remember Me */}
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    id="remember"
-                    checked={rememberMe}
-                    onCheckedChange={setRememberMe}
-                    className="border-white/20 data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600"
-                  />
-                  <Label
-                    htmlFor="remember"
-                    className="text-sm text-white/60 cursor-pointer select-none"
-                  >
-                    Ingat saya
-                  </Label>
+                {/* Remember Me + Lupa Password */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="remember"
+                      checked={rememberMe}
+                      onCheckedChange={setRememberMe}
+                      className="border-white/20 data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600"
+                    />
+                    <Label htmlFor="remember" className="text-sm text-white/60 cursor-pointer select-none">
+                      Ingat saya
+                    </Label>
+                  </div>
+                  <button type="button" onClick={() => setShowRecovery(true)} className="text-xs text-white/40 hover:text-white/70 transition-colors">
+                    Lupa Password?
+                  </button>
                 </div>
+
+                {/* Recovery Modal Inline */}
+                {showRecovery && (
+                  <div className="p-3 rounded-lg bg-white/5 border border-white/10 space-y-2">
+                    <p className="text-xs text-white/60">Masukkan kode recovery untuk reset password:</p>
+                    <Input
+                      type="text"
+                      placeholder="Kode Recovery"
+                      value={recoveryCode}
+                      onChange={(e) => setRecoveryCode(e.target.value)}
+                      className="h-9 bg-white/5 border-white/10 text-white text-sm"
+                    />
+                    {recoveryMsg && <p className="text-xs text-emerald-400">{recoveryMsg}</p>}
+                    <div className="flex gap-2">
+                      <Button type="button" size="sm" variant="outline" className="text-xs h-8 border-white/20 text-white/70" onClick={() => { setShowRecovery(false); setRecoveryCode(''); setRecoveryMsg(''); }}>
+                        Batal
+                      </Button>
+                      <Button type="button" size="sm" className="text-xs h-8 bg-red-600 hover:bg-red-500 text-white" onClick={async () => {
+                        try {
+                          const result = await base44.auth.resetWithRecoveryCode(recoveryCode);
+                          setRecoveryMsg(result.message);
+                          setRecoveryCode('');
+                          setError('');
+                        } catch (err) {
+                          setError(err.message);
+                        }
+                      }}>
+                        Reset Password
+                      </Button>
+                    </div>
+                  </div>
+                )}
 
                 {/* Login Button */}
                 <Button

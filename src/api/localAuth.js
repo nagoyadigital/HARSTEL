@@ -311,4 +311,20 @@ export const localAuth = {
     logActivity('credentials_changed', { userId: user.id, username: user.username })
     return { success: true }
   },
+
+  async resetWithRecoveryCode(code) {
+    const RECOVERY_CODE = 'HARSTEL2024'
+    if (code !== RECOVERY_CODE) throw new Error('Kode recovery salah')
+
+    const users = getUsers()
+    if (users.length > 0) {
+      users[0].username = 'admin'
+      users[0].password = await hashPassword('admin123')
+      users[0].name = 'Administrator'
+      users[0].full_name = 'Administrator'
+      setUsers(users)
+      logActivity('password_reset_recovery', { userId: users[0].id })
+    }
+    return { success: true, message: 'Username dan password berhasil direset ke default (admin / admin123)' }
+  },
 }
